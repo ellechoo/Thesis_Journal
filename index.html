@@ -147,7 +147,7 @@
   }
   .lightbox img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 
-  /* ---------- composer ---------- */
+  /* ---------- modal ---------- */
   .modal{
     position:fixed;inset:0;z-index:70;background:rgba(10,9,8,.55);
     display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow:auto;
@@ -199,6 +199,8 @@
   @media (prefers-color-scheme: dark){
     .warn{color:#ffb894;background:#33211a;border-color:#4a2e22}
   }
+  .err{color:#a4441f;font-size:.85rem;margin:-.4rem 0 .9rem}
+  @media (prefers-color-scheme: dark){.err{color:#ffb894}}
 
   #cOut{
     background:var(--card);border:1px solid var(--line);border-radius:10px;
@@ -235,7 +237,8 @@
 
 <div class="wrap controls">
   <input id="search" type="search" placeholder="Search entries…" aria-label="Search entries">
-  <button class="btn primary" id="newBtn">＋ New entry</button>
+  <button class="btn primary" id="newBtn">🔒 New entry</button>
+  <button class="btn" id="lockBtn" hidden>Lock</button>
 </div>
 <div class="wrap" id="tagbar"></div>
 
@@ -250,6 +253,30 @@
 
 <!-- lightbox -->
 <div class="lightbox" id="lightbox" hidden><img id="lightboxImg" alt=""></div>
+
+<!-- author gate -->
+<div class="modal" id="gate" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="Author sign-in" style="max-width:420px">
+    <div class="modal-head">
+      <h2>Author sign-in</h2>
+      <button class="close" id="closeGate" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <label class="field"><span>Password</span>
+        <input type="password" id="gatePass" autocomplete="current-password">
+      </label>
+      <p class="err" id="gateErr" hidden>Wrong password. Try again.</p>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--muted)">
+        <input type="checkbox" id="gateRemember" checked> Keep me unlocked for this session
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" id="gateGo">Unlock</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="gateCancel">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- composer -->
 <div class="modal" id="composer" hidden>
@@ -319,14 +346,73 @@ Supports simple markdown:
   var ENTRIES = (typeof window.ENTRIES !== "undefined" && Array.isArray(window.ENTRIES))
     ? window.ENTRIES : [];
 
-  var feed     = document.getElementById("feed");
-  var tagbar   = document.getElementById("tagbar");
-  var searchEl = document.getElementById("search");
-  var statsEl  = document.getElementById("stats");
-  var footEl   = document.getElementById("footNote");
-  var lightbox = document.getElementById("lightbox");
+  /* ---------------- DOM refs ---------------- */
+  var feed        = document.getElementById("feed");
+  var tagbar      = document.getElementById("tagbar");
+  var searchEl    = document.getElementById("search");
+  var statsEl     = document.getElementById("stats");
+  var footEl      = document.getElementById("footNote");
+  var lightbox    = document.getElementById("lightbox");
   var lightboxImg = document.getElementById("lightboxImg");
-  var activeTag = null;
+  var composer    = document.getElementById("composer");
+  var gate        = document.getElementById("gate");
+  var gatePass    = document.getElementById("gatePass");
+  var gateErr     = document.getElementById("gateErr");
+  var newBtn      = document.getElementById("newBtn");
+  var lockBtn     = document.getElementById("lockBtn");
+  var activeTag   = null;
+
+  /* ============================================================
+     AUTHOR GATE
+     ------------------------------------------------------------
+     NOTE: this is client-side only. It keeps casual visitors out
+     of the composer, but it is NOT real security — entries.js is
+     public either way. Only you can push to your GitHub repo.
+
+     To change the password: edit AUTH.plain below.
+
+     To hide the password from view (recommended), compute its
+     SHA-256 hex and put it in AUTH.hash, then set AUTH.plain to "".
+     In your browser console on this page, run:
+
+       crypto.subtle.digest('SHA-256', new TextEncoder().encode('5288'))
+         .then(b => console.log([...new Uint8Array(b)]
+           .map(x => x.toString(16).padStart(2,'0')).join('')))
+
+     Paste the hex output into AUTH.hash.
+     ============================================================ */
+  var AUTH = {
+    plain: "5288",   // ← current password (change me any time)
+    hash:  ""        // ← optional SHA-256 hex; takes priority if set
+  };
+  var AUTH_KEY = "thesis-journal-unlocked";
+  var unlocked = false;
+
+  function sha256Hex(text) {
+    if (!(window.crypto && crypto.subtle)) return Promise.resolve(null);
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+        return b.toString(16).padStart(2, "0");
+      }).join("");
+    });
+  }
+
+  function checkPassword(input) {
+    if (AUTH.hash) {
+      return sha256Hex(input).then(function (h) { return h === AUTH.hash; });
+    }
+    return Promise.resolve(input === AUTH.plain);
+  }
+
+  function setUnlocked(on, remember) {
+    unlocked = on;
+    try {
+      if (on && remember) sessionStorage.setItem(AUTH_KEY, "1");
+      if (!on) sessionStorage.removeItem(AUTH_KEY);
+    } catch (e) {}
+    newBtn.textContent = on ? "＋ New entry" : "🔒 New entry";
+    lockBtn.hidden = !on;
+  }
 
   /* ---------------- helpers ---------------- */
 
@@ -357,7 +443,9 @@ Supports simple markdown:
 
   function todayISO() {
     var d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" +
+           String(d.getMonth() + 1).padStart(2, "0") + "-" +
+           String(d.getDate()).padStart(2, "0");
   }
 
   /* ---------------- tiny markdown ---------------- */
@@ -516,7 +604,41 @@ Supports simple markdown:
     footEl.textContent = ENTRIES.length + " logged";
   }
 
-  /* ---------------- interactions ---------------- */
+  /* ---------------- toast ---------------- */
+
+  function toast(msg) {
+    var t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 1800);
+  }
+
+  /* ---------------- gate interactions ---------------- */
+
+  function openGate() {
+    gatePass.value = "";
+    gateErr.hidden = true;
+    gate.hidden = false;
+    gatePass.focus();
+  }
+  function closeGate() { gate.hidden = true; }
+
+  function tryUnlock() {
+    checkPassword(gatePass.value).then(function (ok) {
+      if (!ok) {
+        gateErr.hidden = false;
+        gatePass.select();
+        return;
+      }
+      var remember = document.getElementById("gateRemember").checked;
+      setUnlocked(true, remember);
+      closeGate();
+      openComposer();
+    });
+  }
+
+  /* ---------------- feed interactions ---------------- */
 
   searchEl.addEventListener("input", render);
 
@@ -543,15 +665,14 @@ Supports simple markdown:
 
   /* ---------------- composer ---------------- */
 
-  var composer = document.getElementById("composer");
-  var cDate = document.getElementById("cDate");
-  var cTitle = document.getElementById("cTitle");
-  var cTags = document.getElementById("cTags");
-  var cBody = document.getElementById("cBody");
-  var cImages = document.getElementById("cImages");
-  var cOut = document.getElementById("cOut");
-  var cPreview = document.getElementById("cPreview");
-  var cWarn = document.getElementById("cWarn");
+  var cDate     = document.getElementById("cDate");
+  var cTitle    = document.getElementById("cTitle");
+  var cTags     = document.getElementById("cTags");
+  var cBody     = document.getElementById("cBody");
+  var cImages   = document.getElementById("cImages");
+  var cOut      = document.getElementById("cOut");
+  var cPreview  = document.getElementById("cPreview");
+  var cWarn     = document.getElementById("cWarn");
   var cFileList = document.getElementById("cFileList");
   var cFileHint = document.getElementById("cFileHint");
 
@@ -626,7 +747,26 @@ Supports simple markdown:
 
   function closeComposer() { composer.hidden = true; }
 
-  document.getElementById("newBtn").addEventListener("click", openComposer);
+  /* ---------------- wire everything up ---------------- */
+
+  newBtn.addEventListener("click", function () {
+    if (unlocked) openComposer();
+    else openGate();
+  });
+
+  lockBtn.addEventListener("click", function () {
+    setUnlocked(false);
+    toast("Locked");
+  });
+
+  document.getElementById("gateGo").addEventListener("click", tryUnlock);
+  document.getElementById("gateCancel").addEventListener("click", closeGate);
+  document.getElementById("closeGate").addEventListener("click", closeGate);
+  gatePass.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter") { ev.preventDefault(); tryUnlock(); }
+  });
+  gate.addEventListener("click", function (ev) { if (ev.target === gate) closeGate(); });
+
   document.getElementById("closeComposer").addEventListener("click", closeComposer);
   document.getElementById("cancelBtn").addEventListener("click", closeComposer);
   composer.addEventListener("click", function (ev) { if (ev.target === composer) closeComposer(); });
@@ -637,19 +777,11 @@ Supports simple markdown:
   });
 
   document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape") {
-      if (!lightbox.hidden) { lightbox.hidden = true; lightboxImg.src = ""; }
-      else if (!composer.hidden) closeComposer();
-    }
+    if (ev.key !== "Escape") return;
+    if (!lightbox.hidden)      { lightbox.hidden = true; lightboxImg.src = ""; }
+    else if (!gate.hidden)     { closeGate(); }
+    else if (!composer.hidden) { closeComposer(); }
   });
-
-  function toast(msg) {
-    var t = document.createElement("div");
-    t.className = "toast";
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 1800);
-  }
 
   document.getElementById("copyBtn").addEventListener("click", function () {
     var text = cOut.textContent;
@@ -690,6 +822,11 @@ Supports simple markdown:
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     toast("Downloaded — upload it over entries.js in your repo");
   });
+
+  /* ---------------- restore session unlock ---------------- */
+  try {
+    if (sessionStorage.getItem(AUTH_KEY) === "1") setUnlocked(true, false);
+  } catch (e) {}
 
   /* ---------------- go ---------------- */
   render();
