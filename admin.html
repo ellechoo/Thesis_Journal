@@ -69,7 +69,20 @@
   .thumb video{width:96px;height:72px;object-fit:cover;display:block;background:#000}
   .thumb .vid{width:96px;height:72px;display:flex;align-items:center;justify-content:center;
     background:var(--soft);color:var(--muted);font-size:.75rem;text-align:center;padding:.3rem;overflow:hidden;word-break:break-all}
-  .thumb button{font-size:.75rem;margin-top:.15rem}
+  .thumb{cursor:grab}
+  .thumb.dragging{opacity:.35}
+  .thumb.drop-before{box-shadow:-4px 0 0 var(--ink)}
+  .thumb .pos{position:absolute;top:3px;left:3px;font-size:.68rem;line-height:1;padding:.15rem .3rem;
+    background:var(--paper);color:var(--ink);border-radius:3px;opacity:.85}
+  .thumb .ctrl{display:flex;justify-content:space-between;margin-top:.15rem}
+  .thumb .ctrl button{font:inherit;font-size:.85rem;line-height:1;background:none;border:0;padding:.15rem .3rem;
+    color:var(--muted);cursor:pointer}
+  .thumb .ctrl button:hover{color:var(--ink)}
+  .thumb .ctrl button:disabled{opacity:.25;cursor:default}
+  .thumb .ctrl .x:hover{color:var(--bad)}
+  .add-files{display:inline-block;font-size:.88rem;color:var(--muted);border:1px dashed var(--rule);
+    border-radius:2px;padding:.4rem .8rem;margin:0 0 1.2rem;cursor:pointer}
+  .add-files:hover{color:var(--ink);border-color:var(--muted)}
 
   #list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
   #list li{display:flex;gap:1rem;align-items:baseline;padding:.6rem 0;border-bottom:1px solid var(--rule)}
@@ -131,14 +144,11 @@
       </div>
     </div>
 
-    <div id="eOldWrap" hidden>
-      <label>Photos &amp; videos on this entry</label>
-      <div class="thumbs" id="eOld"></div>
-    </div>
-
-    <label for="ePics" id="ePicsLabel">Photos, videos &amp; PDFs <small>(optional — videos up to 50 MB)</small></label>
-    <input id="ePics" type="file" accept="image/*,video/*,application/pdf,.pdf" multiple>
-    <div class="thumbs" id="eNew"></div>
+    <label>Photos, videos &amp; PDFs <small>(drag or use the arrows to reorder · videos up to 50 MB)</small></label>
+    <div class="thumbs" id="eMedia"></div>
+    <label class="add-files">+ Add files
+      <input id="ePics" type="file" accept="image/*,video/*,application/pdf,.pdf" multiple hidden>
+    </label>
 
     <div class="actions">
       <button class="main-btn" id="eSave">Publish</button>
@@ -163,7 +173,7 @@
   var cfg = recall(CFG_KEY);
   var entries = [];
   var editingId = null;      // id of the entry being edited, or null for a new one
-  var keptImages = [];       // when editing: existing photos and whether to keep them
+  var media = [];            // photos/videos on the entry, in display order: {old: path} or {file: File, url}
   var busy = false;
 
   /* ---------- small helpers ---------- */
@@ -408,20 +418,20 @@
           progress("Converting “" + f.name + "” — page " + n + " of " + total + "…");
         });
         pages.forEach(function (bytes, k) {
-          items.push({ bytes: bytes, folder: "images/", kind: "page",
+          items.push({ from: i, bytes: bytes, folder: "images/", kind: "page",
             name: photoName(date, { name: stem + "-page-" + (k + 1) + ".jpg" }, true) });
         });
       } else if (isVideoFile(f)) {
-        items.push({ bytes: new Uint8Array(await f.arrayBuffer()), folder: "videos/", kind: "video",
+        items.push({ from: i, bytes: new Uint8Array(await f.arrayBuffer()), folder: "videos/", kind: "video",
           name: photoName(date, f, false) });
       } else {
         progress("Preparing photos…");
         var p = await preparePhoto(f);
-        items.push({ bytes: p.bytes, folder: "images/", kind: "photo", name: photoName(date, f, p.jpg) });
+        items.push({ from: i, bytes: p.bytes, folder: "images/", kind: "photo", name: photoName(date, f, p.jpg) });
       }
     }
 
-    var paths = [];
+    var paths = files.map(function () { return []; });   // one list per file (a PDF gives several)
     for (var j = 0; j < items.length; j++) {
       var it = items[j];
       progress(items.length > 1
@@ -430,7 +440,7 @@
       var name = it.name;
       if (await getFile(it.folder + name)) name = name.replace(/(\.[a-z0-9]+)$/, "-" + Date.now().toString(36) + "$1");
       await putFile(it.folder + name, bytesToB64(it.bytes), "Add " + (it.kind === "page" ? "PDF page " : it.kind + " ") + name);
-      paths.push(it.folder + name);
+      paths[it.from].push(it.folder + name);
     }
     return paths;
   }
@@ -509,29 +519,136 @@
     });
   });
 
+  // Each pick ADDS to the list (the browser's picker would otherwise replace earlier picks).
+  // PDFs are split into one image per page right away, so each page can be moved or removed.
   ePics.addEventListener("change", function () {
-    $("eNew").innerHTML = Array.prototype.map.call(ePics.files, function (f) {
+    Array.prototype.forEach.call(ePics.files, function (f) {
       if (isPdfFile(f)) {
-        return '<div class="thumb"><div class="vid">PDF<br>' + esc(f.name) + "</div></div>";
+        var slot = { reading: f.name };
+        media.push(slot);
+        splitPdf(f, slot);
+      } else {
+        media.push({ file: f, url: URL.createObjectURL(f) });
       }
-      var url = URL.createObjectURL(f);
-      return '<div class="thumb">' + (isVideoFile(f)
-        ? '<video src="' + url + '#t=0.1" muted playsinline preload="metadata"></video>'
-        : '<img src="' + url + '" alt="">') + "</div>";
-    }).join("");
+    });
+    ePics.value = "";
+    drawMedia();
   });
 
-  function clearPicker() { ePics.value = ""; $("eNew").innerHTML = ""; }
+  async function splitPdf(f, slot) {
+    var stem = String(f.name).replace(/\.pdf$/i, "");
+    try {
+      var pages = await pdfToImages(f, function (n, total) {
+        slot.reading = f.name + " — page " + n + " of " + total;
+        drawMedia();
+      });
+      var at = media.indexOf(slot);
+      if (at === -1) return;   // removed while it was being read
+      var items = pages.map(function (bytes, k) {
+        var page = new File([bytes], stem + "-page-" + (k + 1) + ".jpg", { type: "image/jpeg" });
+        return { file: page, url: URL.createObjectURL(page) };
+      });
+      media.splice.apply(media, [at, 1].concat(items));
+    } catch (e) {
+      var i = media.indexOf(slot);
+      if (i !== -1) media.splice(i, 1);
+      say(eNote, e.message, true);
+    }
+    drawMedia();
+  }
+
+  function mediaPath(m) { return typeof m.old === "string" ? m.old : (m.old && m.old.src) || ""; }
+
+  function drawMedia() {
+    var box = $("eMedia");
+    box.innerHTML = media.map(function (m, i) {
+      var inner;
+      if (m.reading) {
+        return '<div class="thumb"><div class="vid">Reading PDF…<br>' + esc(m.reading) + "</div></div>";
+      }
+      if (m.file) {
+        inner = isPdfFile(m.file) ? '<div class="vid">PDF<br>' + esc(m.file.name) + "</div>"
+          : isVideoFile(m.file) ? '<video src="' + m.url + '#t=0.1" muted playsinline preload="metadata"></video>'
+          : '<img src="' + m.url + '" alt="">';
+      } else {
+        var src = mediaPath(m);
+        inner = isVideoPath(src) ? '<div class="vid">▶ ' + esc(src.split("/").pop()) + "</div>"
+          : '<img src="' + esc(rawUrl(src)) + '" alt="">';
+      }
+      return '<div class="thumb" draggable="true" data-i="' + i + '">' + inner +
+        '<span class="pos">' + (i + 1) + "</span>" +
+        '<div class="ctrl">' +
+          '<button data-move="-1" data-i="' + i + '" title="Move left"' + (i === 0 ? " disabled" : "") + ">‹</button>" +
+          '<button class="x" data-remove data-i="' + i + '" title="Remove">×</button>' +
+          '<button data-move="1" data-i="' + i + '" title="Move right"' + (i === media.length - 1 ? " disabled" : "") + ">›</button>" +
+        "</div></div>";
+    }).join("");
+  }
+
+  function moveMedia(from, to) {
+    if (from === to || to < 0 || to >= media.length) return;
+    var m = media.splice(from, 1)[0];
+    media.splice(to, 0, m);
+    drawMedia();
+  }
+
+  $("eMedia").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    var i = +b.dataset.i;
+    if (b.hasAttribute("data-remove")) {
+      var gone = media.splice(i, 1)[0];
+      if (gone && gone.url) URL.revokeObjectURL(gone.url);
+      drawMedia();
+    } else {
+      moveMedia(i, i + (+b.dataset.move));
+    }
+  });
+
+  // Drag and drop to reorder
+  var dragFrom = null;
+  $("eMedia").addEventListener("dragstart", function (ev) {
+    var t = ev.target.closest(".thumb");
+    if (!t) return;
+    dragFrom = +t.dataset.i;
+    t.classList.add("dragging");
+    ev.dataTransfer.effectAllowed = "move";
+    try { ev.dataTransfer.setData("text/plain", String(dragFrom)); } catch (e) {}
+  });
+  $("eMedia").addEventListener("dragover", function (ev) {
+    if (dragFrom === null) return;
+    ev.preventDefault();
+    var t = ev.target.closest(".thumb");
+    Array.prototype.forEach.call(this.children, function (c) { c.classList.toggle("drop-before", c === t); });
+  });
+  $("eMedia").addEventListener("drop", function (ev) {
+    if (dragFrom === null) return;
+    ev.preventDefault();
+    var t = ev.target.closest(".thumb");
+    var onThumb = t && t.dataset.i !== undefined;
+    var to = onThumb ? +t.dataset.i : media.length - 1;
+    if (to > dragFrom && onThumb) to -= 1;   // dropping before the target, after removing the dragged one
+    moveMedia(dragFrom, Math.max(0, to));
+  });
+  $("eMedia").addEventListener("dragend", function () {
+    dragFrom = null;
+    drawMedia();
+  });
+
+  function resetMedia(list) {
+    media.forEach(function (m) { if (m.url) URL.revokeObjectURL(m.url); });
+    media = (list || []).map(function (im) { return { old: im }; });
+    ePics.value = "";
+    drawMedia();
+  }
 
   function newEntry() {
-    editingId = null; keptImages = [];
+    editingId = null;
     var d = recall(DRAFT_KEY);
     eTitle.value = d ? d.title : ""; eBody.value = d ? d.body : ""; eTags.value = d ? d.tags : "";
     eDate.value = (d && d.date) || today();
-    clearPicker();
+    resetMedia([]);
     $("eHead").textContent = "New entry";
-    $("ePicsLabel").innerHTML = "Photos, videos &amp; PDFs <small>(optional — videos up to 50 MB)</small>";
-    $("eOldWrap").hidden = true;
     $("eCancel").hidden = true;
     eSave.textContent = "Publish";
     drawList();
@@ -543,11 +660,8 @@
     editingId = id;
     eTitle.value = e.title || ""; eBody.value = e.body || ""; eDate.value = e.date || today();
     eTags.value = (e.tags || []).join(", ");
-    keptImages = (e.images || []).map(function (im) { return { im: im, keep: true }; });
-    clearPicker();
+    resetMedia(e.images || []);
     $("eHead").textContent = "Editing entry";
-    $("ePicsLabel").innerHTML = "Add more photos, videos or PDFs <small>(optional)</small>";
-    drawOldPhotos();
     $("eCancel").hidden = false;
     eSave.textContent = "Save changes";
     say(eNote, "");
@@ -555,26 +669,6 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
     eTitle.focus();
   }
-
-  function drawOldPhotos() {
-    var wrap = $("eOldWrap"), box = $("eOld");
-    wrap.hidden = !keptImages.length;
-    box.innerHTML = keptImages.map(function (k, i) {
-      var src = typeof k.im === "string" ? k.im : k.im.src;
-      var media = isVideoPath(src)
-        ? '<div class="vid">▶ ' + esc(src.split("/").pop()) + "</div>"
-        : '<img src="' + esc(rawUrl(src)) + '" alt="">';
-      return '<div class="thumb' + (k.keep ? "" : " gone") + '">' + media +
-        '<button class="linkish' + (k.keep ? " danger" : "") + '" data-i="' + i + '">' + (k.keep ? "remove" : "undo") + "</button></div>";
-    }).join("");
-  }
-  $("eOld").addEventListener("click", function (ev) {
-    var b = ev.target.closest("button");
-    if (!b) return;
-    var k = keptImages[+b.dataset.i];
-    k.keep = !k.keep;
-    drawOldPhotos();
-  });
 
   $("eCancel").addEventListener("click", function () { newEntry(); say(eNote, ""); });
 
@@ -588,6 +682,7 @@
   eSave.addEventListener("click", async function () {
     if (busy) return;
     if (!eTitle.value.trim() && !eBody.value.trim()) { eBody.focus(); return; }
+    if (media.some(function (m) { return m.reading; })) { say(eNote, "Still reading a PDF — one moment, then save again."); return; }
     busy = true; eSave.disabled = true;
     var wasEditing = editingId;
     var fields = {
@@ -597,10 +692,17 @@
       body: eBody.value.replace(/\s+$/, "")
     };
     try {
-      var added = await uploadPhotos(Array.prototype.slice.call(ePics.files || []), fields.date, function (m) { say(eNote, m); });
+      var newFiles = media.filter(function (m) { return m.file; }).map(function (m) { return m.file; });
+      var uploaded = await uploadPhotos(newFiles, fields.date, function (m) { say(eNote, m); });
+      // Build the final list in the order shown in the editor (a PDF expands to its pages in place).
+      var k = 0;
+      fields.images = [];
+      media.forEach(function (m) {
+        if (m.file) fields.images = fields.images.concat(uploaded[k++]);
+        else fields.images.push(m.old);
+      });
       say(eNote, "Saving…");
       if (wasEditing) {
-        fields.images = keptImages.filter(function (k) { return k.keep; }).map(function (k) { return k.im; }).concat(added);
         entries = await commit(function (list) {
           var found = false;
           list = list.map(function (e) {
@@ -612,7 +714,7 @@
           return list;
         }, "Edit journal entry: " + (fields.title || fields.date));
       } else {
-        var entry = Object.assign({ id: newId() }, fields, { images: added });
+        var entry = Object.assign({ id: newId() }, fields);
         entries = await commit(function (list) { return [entry].concat(list); },
           "New journal entry: " + (fields.title || fields.date));
         store(DRAFT_KEY, undefined);
