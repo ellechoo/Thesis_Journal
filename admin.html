@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal Editor</title>
+<!-- Keep this file on your own computer. Don't upload it to the repo. -->
+<style>
+  :root{
+    --paper:#fbfaf7; --ink:#222; --muted:#7a766f; --rule:#dedad2;
+    --link:#8a3b12; --field:#fff; --bad:#a4441f; --soft:#f1eee8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#1a1918; --ink:#e6e2da; --muted:#948e84; --rule:#35322e;
+      --link:#e0a27a; --field:#222120; --bad:#ffb894; --soft:#252321;
+    }
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 Charter,"Iowan Old Style",Georgia,serif}
+  .page{max-width:720px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+  a{color:var(--link)}
+  small{font-size:.82rem;color:var(--muted)}
+
+  header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;
+    padding-bottom:1rem;border-bottom:1px solid var(--rule);margin-bottom:2rem}
+  header h1{font-size:1.5rem;font-weight:normal;margin:0}
+  #where{font-size:.85rem;color:var(--muted)}
+
+  h2{font-size:1.15rem;font-weight:normal;margin:0 0 1rem}
+  section{margin-bottom:3rem}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:0 0 .25rem}
+  input,textarea{
+    width:100%;font:inherit;font-size:1rem;color:inherit;background:var(--field);
+    border:1px solid var(--rule);border-radius:2px;padding:.45rem .6rem;margin-bottom:1rem;
+  }
+  input:focus,textarea:focus{outline:none;border-color:var(--muted)}
+  input[type=file]{border:0;padding:0;background:none;font-size:.85rem}
+  #eTitle{font-size:1.2rem}
+  #eBody{min-height:18rem;line-height:1.6;resize:vertical}
+  .two{display:flex;gap:1rem}
+  .two > div{flex:1}
+  @media (max-width:520px){.two{display:block}}
+
+  .actions{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap}
+  .main-btn{font:inherit;font-size:.95rem;cursor:pointer;padding:.45rem 1rem;border-radius:2px;background:var(--ink);color:var(--paper);border:1px solid var(--ink)}
+  .main-btn:disabled{opacity:.55;cursor:default}
+  .linkish{font:inherit;font-size:inherit;background:none;border:0;padding:0;color:var(--muted);cursor:pointer;text-decoration:underline}
+  .linkish:hover{color:var(--ink)}
+  .linkish.danger:hover{color:var(--bad)}
+  .note{font-size:.88rem;color:var(--muted);margin:.8rem 0 0;min-height:1.4em}
+  .note.bad{color:var(--bad)}
+  .steps{font-size:.9rem;color:var(--muted);margin:0 0 1.2rem;padding-left:1.2rem}
+  .steps li{margin-bottom:.25rem}
+
+  .thumbs{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1rem}
+  .thumb{position:relative;width:96px}
+  .thumb img{width:96px;height:72px;object-fit:cover;display:block;background:var(--soft)}
+  .thumb.gone img{opacity:.25}
+  .thumb button{font-size:.75rem;margin-top:.15rem}
+
+  #list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+  #list li{display:flex;gap:1rem;align-items:baseline;padding:.6rem 0;border-bottom:1px solid var(--rule)}
+  #list .d{font-size:.82rem;color:var(--muted);flex:0 0 6.5rem}
+  #list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #list li.editing .t{font-style:italic}
+  #list .b{font-size:.85rem;display:flex;gap:.8rem}
+  .empty{color:var(--muted);font-style:italic}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1>Journal editor</h1>
+    <span id="where"></span>
+  </header>
+
+  <!-- one-time connection -->
+  <section id="connect" hidden>
+    <h2>Connect to your journal’s GitHub repo</h2>
+    <ol class="steps">
+      <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub’s new token page</a>.</li>
+      <li>Name it (e.g. “journal editor”) and set an expiration — up to a year.</li>
+      <li>Under <em>Repository access</em>, choose <em>Only select repositories</em> and pick the journal repo.</li>
+      <li>Under <em>Permissions</em>, set <em>Contents</em> to <em>Read and write</em>, and <em>Pages</em> to <em>Read-only</em>.</li>
+      <li>Click <em>Generate token</em>, copy it, and paste it below.</li>
+    </ol>
+    <label for="cRepo">Repository</label>
+    <input id="cRepo" type="text" placeholder="your-username/your-repo  (or paste the GitHub link)" autocomplete="off" spellcheck="false">
+    <label for="cToken">Token</label>
+    <input id="cToken" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+    <div class="actions">
+      <button class="main-btn" id="cGo">Connect</button>
+      <button class="linkish" id="cCancel" hidden>Cancel</button>
+      <button class="linkish danger" id="cForget" hidden>Disconnect this computer</button>
+    </div>
+    <p class="note" id="cNote">The token is saved only in this browser on this computer.</p>
+  </section>
+
+  <!-- editor -->
+  <section id="editor" hidden>
+    <h2 id="eHead">New entry</h2>
+
+    <label for="eTitle">Title</label>
+    <input id="eTitle" type="text" placeholder="What happened today?">
+
+    <label for="eBody">Notes</label>
+    <textarea id="eBody" placeholder="Just write. Blank line = new paragraph.  - for a bullet,  **bold**,  *italic*."></textarea>
+
+    <div class="two">
+      <div>
+        <label for="eTags">Tags <small>(optional, comma separated)</small></label>
+        <input id="eTags" type="text" placeholder="reading, methods">
+      </div>
+      <div>
+        <label for="eDate">Date</label>
+        <input id="eDate" type="date">
+      </div>
+    </div>
+
+    <div id="eOldWrap" hidden>
+      <label>Photos on this entry</label>
+      <div class="thumbs" id="eOld"></div>
+    </div>
+
+    <label for="ePics" id="ePicsLabel">Photos <small>(optional)</small></label>
+    <input id="ePics" type="file" accept="image/*" multiple>
+    <div class="thumbs" id="eNew"></div>
+
+    <div class="actions">
+      <button class="main-btn" id="eSave">Publish</button>
+      <button class="linkish" id="eCancel" hidden>Cancel editing</button>
+    </div>
+    <p class="note" id="eNote"></p>
+  </section>
+
+  <!-- entries -->
+  <section id="entries" hidden>
+    <h2>Entries <small id="count"></small></h2>
+    <ul id="list"></ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var CFG_KEY = "journal-editor-github", DRAFT_KEY = "journal-editor-draft";
+  var cfg = recall(CFG_KEY);
+  var entries = [];
+  var editingId = null;      // id of the entry being edited, or null for a new one
+  var keptImages = [];       // when editing: existing photos and whether to keep them
+  var busy = false;
+
+  /* ---------- small helpers ---------- */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function store(k, v) { try { if (v === undefined) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function recall(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function shortDate(iso) {
+    var d = new Date(String(iso) + "T00:00:00");
+    return isNaN(d) ? (iso || "—") : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+  function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function say(el, text, bad) { el.textContent = text || ""; el.classList.toggle("bad", !!bad); }
+
+  function bytesToB64(u8) {
+    var s = "";
+    for (var i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function textToB64(t) { return bytesToB64(new TextEncoder().encode(t)); }
+  function b64ToText(b) {
+    var s = atob(String(b).replace(/\s/g, "")), u = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+    return new TextDecoder().decode(u);
+  }
+
+  /* ---------- GitHub ---------- */
+  function api(method, path, body, c) {
+    c = c || cfg;
+    return fetch("https://api.github.com" + path, {
+      method: method,
+      cache: "no-store",
+      headers: {
+        "Authorization": "Bearer " + c.token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      if (r.status === 404 && method === "GET") return null;
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.message || ("GitHub said " + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+  function contentsPath(c, file) {
+    var full = (c.folder ? c.folder + "/" : "") + file;
+    return "/repos/" + c.repo + "/contents/" + full.split("/").map(encodeURIComponent).join("/");
+  }
+  function getFile(file, c) {
+    c = c || cfg;
+    return api("GET", contentsPath(c, file) + "?ref=" + encodeURIComponent(c.branch), null, c);
+  }
+  function putFile(file, b64, message, sha) {
+    var body = { message: message, content: b64, branch: cfg.branch };
+    if (sha) body.sha = sha;
+    return api("PUT", contentsPath(cfg, file), body);
+  }
+  function fileText(f) {
+    if (f.encoding === "base64" && f.content) return Promise.resolve(b64ToText(f.content));
+    return api("GET", "/repos/" + cfg.repo + "/git/blobs/" + f.sha).then(function (b) { return b64ToText(b.content); });
+  }
+  function rawUrl(path) {
+    if (/^https?:/i.test(path)) return path;
+    return "https://raw.githubusercontent.com/" + cfg.repo + "/" + encodeURIComponent(cfg.branch) + "/" +
+      (cfg.folder ? cfg.folder + "/" : "") + path.split("/").map(encodeURIComponent).join("/");
+  }
+
+  async function connect(repo, token) {
+    var c = { repo: repo, token: token, branch: "", folder: "", site: "" };
+    var info = await api("GET", "/repos/" + repo, null, c);
+    if (!info) throw new Error("Couldn't find that repository. Check the name, and that the token was given access to it.");
+    if (info.permissions && !info.permissions.push) throw new Error("This token can't write to the repo. Set Contents to “Read and write”.");
+    c.branch = info.default_branch;
+
+    var pages = null;
+    try { pages = await api("GET", "/repos/" + repo + "/pages", null, c); } catch (e) {}
+    if (pages && pages.source) {
+      c.branch = pages.source.branch || c.branch;
+      c.folder = String(pages.source.path || "").replace(/^\/+|\/+$/g, "");
+      c.site = pages.html_url || "";
+    } else {
+      var hasRoot = (await getFile("entries.json", c)) || (await getFile("entries.js", c)) || (await getFile("index.html", c));
+      if (!hasRoot && (await getFile("index.html", Object.assign({}, c, { folder: "docs" })))) c.folder = "docs";
+    }
+    if (!c.site) {
+      var p = repo.split("/");
+      c.site = /\.github\.io$/i.test(p[1]) ? "https://" + p[1] + "/" : "https://" + p[0] + ".github.io/" + p[1] + "/";
+    }
+    return c;
+  }
+
+  // Always read the newest copy from GitHub. Older sites keep entries in entries.js — read that if there's no entries.json yet.
+  async function fetchEntries() {
+    var f = await getFile("entries.json");
+    if (f) {
+      var list = JSON.parse(await fileText(f));
+      if (!Array.isArray(list)) throw new Error("entries.json in your repo isn't a list.");
+      return { sha: f.sha, list: list };
+    }
+    var old = await getFile("entries.js");
+    if (!old) return { sha: null, list: [] };
+    var parsed = new Function("window", (await fileText(old)) +
+      "\n;return (typeof ENTRIES !== 'undefined') ? ENTRIES : window.ENTRIES;")({});
+    return { sha: null, list: Array.isArray(parsed) ? parsed : [] };
+  }
+  // Older entries have no id; derive a stable one from their content so it's the same every time.
+  function stableId(e) {
+    var s = [e.date, e.title, e.body].join("|"), h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return "e" + h.toString(36);
+  }
+  function withIds(list) {
+    return list.map(function (e) { return e.id ? e : Object.assign({ id: stableId(e) }, e); });
+  }
+
+  // Apply a change to the latest copy on GitHub and save it (retries if two saves collide).
+  async function commit(change, message) {
+    for (var attempt = 0; ; attempt++) {
+      var cur = await fetchEntries();
+      var next = change(withIds(cur.list));
+      next.sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
+      try {
+        await putFile("entries.json", textToB64(JSON.stringify(next, null, 2) + "\n"), message, cur.sha);
+        return next;
+      } catch (e) {
+        if ((e.status === 409 || e.status === 422) && attempt < 2) continue;
+        throw e;
+      }
+    }
+  }
+
+  /* ---------- photos ---------- */
+  function preparePhoto(file) {
+    function original() { return file.arrayBuffer().then(function (b) { return { bytes: new Uint8Array(b), jpg: false }; }); }
+    if (/gif|svg/i.test(file.type)) return original();
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 1600 / Math.max(w, h));
+        if (k === 1 && file.size < 1.5e6) { URL.revokeObjectURL(url); resolve(original()); return; }
+        var cv = document.createElement("canvas");
+        cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+        var ctx = cv.getContext("2d");
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (blob) {
+          if (!blob) { resolve(original()); return; }
+          blob.arrayBuffer().then(function (b) { resolve({ bytes: new Uint8Array(b), jpg: true }); });
+        }, "image/jpeg", 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(original()); };
+      img.src = url;
+    });
+  }
+  function photoName(date, file, jpg) {
+    var base = String(file.name).replace(/\.[^.]+$/, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "") || "photo";
+    var ext = jpg ? "jpg" : ((String(file.name).match(/\.([a-z0-9]+)$/i) || [0, "jpg"])[1].toLowerCase());
+    return date + "-" + base + "." + ext;
+  }
+  async function uploadPhotos(files, date, progress) {
+    var paths = [];
+    for (var i = 0; i < files.length; i++) {
+      progress("Uploading photo " + (i + 1) + " of " + files.length + "…");
+      var p = await preparePhoto(files[i]);
+      var name = photoName(date, files[i], p.jpg);
+      if (await getFile("images/" + name)) name = name.replace(/(\.[a-z0-9]+)$/, "-" + Date.now().toString(36) + "$1");
+      await putFile("images/" + name, bytesToB64(p.bytes), "Add photo " + name);
+      paths.push("images/" + name);
+    }
+    return paths;
+  }
+
+  /* ---------- connect panel ---------- */
+  var connectEl = $("connect"), cRepo = $("cRepo"), cToken = $("cToken"), cNote = $("cNote");
+
+  function showConnect() {
+    connectEl.hidden = false;
+    $("editor").hidden = $("entries").hidden = true;
+    cRepo.value = cfg ? cfg.repo : "";
+    cToken.value = "";
+    cToken.placeholder = cfg ? "Leave empty to keep the current token" : "github_pat_…";
+    $("cCancel").hidden = $("cForget").hidden = !cfg;
+    say(cNote, "The token is saved only in this browser on this computer.");
+    (cRepo.value ? cToken : cRepo).focus();
+  }
+
+  $("cGo").addEventListener("click", function () {
+    var repo = cRepo.value.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\.git$/i, "").replace(/\/+$/, "");
+    var token = cToken.value.trim() || (cfg && cfg.repo === repo ? cfg.token : "");
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { say(cNote, "Enter the repository as username/repo-name.", true); return; }
+    if (!token) { say(cNote, "Paste your token first.", true); return; }
+    var btn = this; btn.disabled = true;
+    say(cNote, "Checking…");
+    connect(repo, token).then(function (c) {
+      cfg = c; store(CFG_KEY, c);
+      connectEl.hidden = true;
+      start();
+    }).catch(function (e) {
+      say(cNote, e.status === 401 ? "GitHub didn't accept that token. Make sure you copied all of it and it hasn't expired." : e.message, true);
+    }).finally(function () { btn.disabled = false; });
+  });
+  $("cCancel").addEventListener("click", function () { connectEl.hidden = true; start(); });
+  $("cForget").addEventListener("click", function () {
+    store(CFG_KEY, undefined); cfg = null;
+    $("where").innerHTML = "";
+    showConnect();
+    say(cNote, "Disconnected. The token has been removed from this computer.");
+  });
+
+  function showWhere() {
+    $("where").innerHTML = '<a href="' + esc(cfg.site) + '" target="_blank" rel="noopener">View site</a> · ' +
+      esc(cfg.repo) + ' · <button class="linkish" id="settings">settings</button>';
+    $("settings").addEventListener("click", showConnect);
+  }
+
+  /* ---------- editor ---------- */
+  var eTitle = $("eTitle"), eBody = $("eBody"), eTags = $("eTags"), eDate = $("eDate"),
+      ePics = $("ePics"), eNote = $("eNote"), eSave = $("eSave");
+
+  [eTitle, eBody, eTags, eDate].forEach(function (el) {
+    el.addEventListener("input", function () {
+      if (!editingId) store(DRAFT_KEY, { title: eTitle.value, body: eBody.value, tags: eTags.value, date: eDate.value });
+    });
+  });
+
+  ePics.addEventListener("change", function () {
+    $("eNew").innerHTML = Array.prototype.map.call(ePics.files, function (f) {
+      return '<div class="thumb"><img src="' + URL.createObjectURL(f) + '" alt=""></div>';
+    }).join("");
+  });
+
+  function clearPicker() { ePics.value = ""; $("eNew").innerHTML = ""; }
+
+  function newEntry() {
+    editingId = null; keptImages = [];
+    var d = recall(DRAFT_KEY);
+    eTitle.value = d ? d.title : ""; eBody.value = d ? d.body : ""; eTags.value = d ? d.tags : "";
+    eDate.value = (d && d.date) || today();
+    clearPicker();
+    $("eHead").textContent = "New entry";
+    $("ePicsLabel").innerHTML = "Photos <small>(optional)</small>";
+    $("eOldWrap").hidden = true;
+    $("eCancel").hidden = true;
+    eSave.textContent = "Publish";
+    drawList();
+  }
+
+  function editEntry(id) {
+    var e = entries.find(function (x) { return x.id === id; });
+    if (!e) return;
+    editingId = id;
+    eTitle.value = e.title || ""; eBody.value = e.body || ""; eDate.value = e.date || today();
+    eTags.value = (e.tags || []).join(", ");
+    keptImages = (e.images || []).map(function (im) { return { im: im, keep: true }; });
+    clearPicker();
+    $("eHead").textContent = "Editing entry";
+    $("ePicsLabel").innerHTML = "Add more photos <small>(optional)</small>";
+    drawOldPhotos();
+    $("eCancel").hidden = false;
+    eSave.textContent = "Save changes";
+    say(eNote, "");
+    drawList();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    eTitle.focus();
+  }
+
+  function drawOldPhotos() {
+    var wrap = $("eOldWrap"), box = $("eOld");
+    wrap.hidden = !keptImages.length;
+    box.innerHTML = keptImages.map(function (k, i) {
+      var src = typeof k.im === "string" ? k.im : k.im.src;
+      return '<div class="thumb' + (k.keep ? "" : " gone") + '"><img src="' + esc(rawUrl(src)) + '" alt="">' +
+        '<button class="linkish' + (k.keep ? " danger" : "") + '" data-i="' + i + '">' + (k.keep ? "remove" : "undo") + "</button></div>";
+    }).join("");
+  }
+  $("eOld").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    var k = keptImages[+b.dataset.i];
+    k.keep = !k.keep;
+    drawOldPhotos();
+  });
+
+  $("eCancel").addEventListener("click", function () { newEntry(); say(eNote, ""); });
+
+  function failMessage(e) {
+    if (e.status === 401) return "GitHub didn't accept your token — it may have expired. Open settings and paste a new one.";
+    if (e.status === 403 || e.status === 404) return "GitHub refused the change. Check the token has Contents set to “Read and write” for this repo.";
+    if (/fetch/i.test(e.message || "")) return "Couldn't reach GitHub. Check your internet connection.";
+    return e.message || "Something went wrong.";
+  }
+
+  eSave.addEventListener("click", async function () {
+    if (busy) return;
+    if (!eTitle.value.trim() && !eBody.value.trim()) { eBody.focus(); return; }
+    busy = true; eSave.disabled = true;
+    var wasEditing = editingId;
+    var fields = {
+      date: eDate.value || today(),
+      title: eTitle.value.trim(),
+      tags: eTags.value.split(",").map(function (s) { return s.trim(); }).filter(Boolean),
+      body: eBody.value.replace(/\s+$/, "")
+    };
+    try {
+      var added = await uploadPhotos(Array.prototype.slice.call(ePics.files || []), fields.date, function (m) { say(eNote, m); });
+      say(eNote, "Saving…");
+      if (wasEditing) {
+        fields.images = keptImages.filter(function (k) { return k.keep; }).map(function (k) { return k.im; }).concat(added);
+        entries = await commit(function (list) {
+          var found = false;
+          list = list.map(function (e) {
+            if (e.id !== wasEditing) return e;
+            found = true;
+            return Object.assign({}, e, fields);
+          });
+          if (!found) list.unshift(Object.assign({ id: wasEditing }, fields));
+          return list;
+        }, "Edit journal entry: " + (fields.title || fields.date));
+      } else {
+        var entry = Object.assign({ id: newId() }, fields, { images: added });
+        entries = await commit(function (list) { return [entry].concat(list); },
+          "New journal entry: " + (fields.title || fields.date));
+        store(DRAFT_KEY, undefined);
+      }
+      newEntry();
+      say(eNote, (wasEditing ? "Changes saved." : "Published.") + " The public site updates within a couple of minutes.");
+    } catch (e) {
+      say(eNote, "Not saved: " + failMessage(e) + " Your text is still here.", true);
+    } finally {
+      busy = false; eSave.disabled = false;
+    }
+  });
+
+  /* ---------- entries list ---------- */
+  function drawList() {
+    var ul = $("list");
+    $("count").textContent = entries.length ? "(" + entries.length + ")" : "";
+    if (!entries.length) { ul.innerHTML = '<li class="empty">No entries yet.</li>'; return; }
+    ul.innerHTML = entries.map(function (e) {
+      return '<li class="' + (e.id === editingId ? "editing" : "") + '">' +
+        '<span class="d">' + esc(shortDate(e.date)) + "</span>" +
+        '<span class="t">' + esc(e.title || (e.body || "").slice(0, 60) || "Untitled") + "</span>" +
+        '<span class="b">' +
+          (e.id === editingId ? "<small>editing</small>" : '<button class="linkish" data-edit="' + esc(e.id) + '">edit</button>') +
+          '<button class="linkish danger" data-del="' + esc(e.id) + '">delete</button>' +
+        "</span></li>";
+    }).join("");
+  }
+
+  $("list").addEventListener("click", async function (ev) {
+    var b = ev.target.closest("button");
+    if (!b || busy) return;
+    if (b.dataset.edit) { editEntry(b.dataset.edit); return; }
+    var id = b.dataset.del;
+    var e = entries.find(function (x) { return x.id === id; });
+    if (!e || !confirm("Delete “" + (e.title || shortDate(e.date)) + "” from the public site?")) return;
+    busy = true;
+    say(eNote, "Deleting…");
+    try {
+      entries = await commit(function (list) { return list.filter(function (x) { return x.id !== id; }); },
+        "Delete journal entry: " + (e.title || e.date));
+      if (editingId === id) newEntry(); else drawList();
+      say(eNote, "Deleted. The public site updates within a couple of minutes.");
+    } catch (err) {
+      say(eNote, "Not deleted: " + failMessage(err), true);
+    } finally { busy = false; }
+  });
+
+  /* ---------- start ---------- */
+  async function start() {
+    if (!cfg) { showConnect(); return; }
+    showWhere();
+    $("editor").hidden = $("entries").hidden = false;
+    newEntry();
+    $("list").innerHTML = '<li class="empty">Loading entries…</li>';
+    try {
+      var cur = await fetchEntries();
+      entries = withIds(cur.list).sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
+      drawList();
+    } catch (e) {
+      $("list").innerHTML = "";
+      say(eNote, "Couldn't load your entries: " + failMessage(e), true);
+    }
+  }
+  start();
+})();
+</script>
+</body>
+</html>

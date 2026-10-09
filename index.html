@@ -5,452 +5,136 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Thesis Journal</title>
 <meta name="description" content="Progress log for my thesis project.">
-
 <style>
-  *{box-sizing:border-box}
   :root{
-    --bg:#f7f6f3;
-    --card:#ffffff;
-    --ink:#1b1a18;
-    --muted:#6f6a62;
-    --line:#e4e0d8;
-    --accent:#3d5a80;
-    --accent-ink:#ffffff;
-    --accent-soft:#eaeef5;
-    --radius:14px;
-    --shadow:0 1px 2px rgba(20,18,15,.05), 0 10px 28px -16px rgba(20,18,15,.28);
+    --paper:#fbfaf7;
+    --ink:#222;
+    --muted:#7a766f;
+    --rule:#dedad2;
+    --link:#8a3b12;
+    --field:#fff;
+    --bad:#a4441f;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#141413;
-      --card:#1c1c1b;
-      --ink:#eae7e1;
-      --muted:#9a948a;
-      --line:#2f2d2a;
-      --accent:#8ab4f8;
-      --accent-ink:#101720;
-      --accent-soft:#22282f;
-      --shadow:none;
+      --paper:#1a1918;
+      --ink:#e6e2da;
+      --muted:#948e84;
+      --rule:#35322e;
+      --link:#e0a27a;
+      --field:#222120;
+      --bad:#ffb894;
     }
   }
+  *{box-sizing:border-box}
   [hidden]{display:none !important}
-
-  html{-webkit-text-size-adjust:100%}
   body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
-    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
+    margin:0;background:var(--paper);color:var(--ink);
+    font:18px/1.65 Charter,"Iowan Old Style",Georgia,serif;
   }
-  .wrap{width:min(760px, 100% - 2.5rem);margin-inline:auto}
+  .page{max-width:640px;margin:0 auto;padding:3.5rem 1.25rem 4rem}
+  a{color:var(--link)}
+  small,.meta{font-size:.82rem;color:var(--muted)}
 
-  /* ---------- header ---------- */
-  .site-head{padding:4rem 0 2rem;border-bottom:1px solid var(--line)}
-  .kicker{margin:0 0 .75rem;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--accent)}
-  .site-head h1{
-    font-family:Georgia,"Iowan Old Style","Times New Roman",serif;
-    font-size:clamp(1.9rem,5vw,2.6rem);
-    line-height:1.15;letter-spacing:-.02em;margin:0 0 .6rem;
-  }
-  .sub{margin:0;color:var(--muted);max-width:54ch}
-  .stats{margin:1.25rem 0 0;font-size:.82rem;color:var(--muted)}
+  header h1{font-size:1.9rem;font-weight:normal;margin:0}
+  header p{margin:.2rem 0 0;color:var(--muted)}
 
-  /* ---------- controls ---------- */
-  .controls{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:1.6rem 0 .9rem}
+  .tools{margin:2rem 0 2.5rem;padding-bottom:1rem;border-bottom:1px solid var(--rule)}
   #search{
-    flex:1 1 200px;padding:.65rem .9rem;border-radius:10px;
-    border:1px solid var(--line);background:var(--card);color:inherit;
-    font:inherit;font-size:.95rem;
+    width:100%;font:inherit;font-size:1rem;color:inherit;background:transparent;
+    border:0;border-bottom:1px solid var(--rule);padding:.3rem 0;margin-bottom:.6rem;
   }
-  #search:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  #search:focus{outline:none;border-bottom-color:var(--ink)}
+  #tags{font-size:.88rem;color:var(--muted)}
+  #tags button{font:inherit;background:none;border:0;padding:0;color:var(--muted);cursor:pointer}
+  #tags button:hover{color:var(--ink)}
+  #tags button.on{color:var(--ink);text-decoration:underline}
 
-  .btn{
-    font:inherit;font-size:.9rem;padding:.6rem 1rem;border-radius:10px;
-    border:1px solid var(--line);background:var(--card);color:inherit;
-    cursor:pointer;transition:.15s;white-space:nowrap;
-  }
-  .btn:hover{border-color:var(--accent);color:var(--accent)}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-  .btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+  .month{font-size:.95rem;font-style:italic;font-weight:normal;color:var(--muted);margin:3rem 0 1rem}
+  .month:first-child{margin-top:0}
+  article{margin-bottom:2.5rem}
+  article h2{font-size:1.3rem;font-weight:normal;margin:.1rem 0 .5rem;line-height:1.3}
+  .body p{margin:0 0 1rem}
+  .body h3,.body h4,.body h5{font-size:1.05rem;margin:1.4rem 0 .4rem}
+  .body ul,.body ol{padding-left:1.3rem;margin:0 0 1rem}
+  .body blockquote{margin:0 0 1rem;padding-left:1rem;border-left:2px solid var(--rule);color:var(--muted)}
+  .body hr{border:0;border-top:1px solid var(--rule);margin:1.5rem 0}
+  .body code{font:.85em ui-monospace,Menlo,Consolas,monospace}
+  .body pre{font-size:.85rem;overflow:auto;padding:.8rem;border:1px solid var(--rule);margin:0 0 1rem}
+  .body img,.pics img{max-width:100%;display:block;cursor:zoom-in}
+  .pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem;margin-top:.8rem}
+  .pics figure{margin:0}
+  .pics img{width:100%;aspect-ratio:4/3;object-fit:cover}
+  .pics figcaption{font-size:.8rem;color:var(--muted)}
+  .empty{color:var(--muted);font-style:italic}
 
-  #tagbar{display:flex;flex-wrap:wrap;gap:.4rem;padding-bottom:1.4rem}
-  .tag{
-    font:inherit;font-size:.78rem;padding:.25rem .65rem;border-radius:999px;
-    border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;
-  }
-  .tag:hover{color:var(--accent);border-color:var(--accent)}
-  .tag.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.85rem;color:var(--muted);display:flex;justify-content:space-between}
 
-  /* ---------- feed ---------- */
-  #feed{padding-bottom:6rem}
-  .month{
-    font-family:inherit;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--muted);font-weight:700;margin:2.6rem 0 .9rem;
-    padding-bottom:.5rem;border-bottom:1px solid var(--line);
-  }
-  .month:first-child{margin-top:.5rem}
-
-  .entry{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:1.4rem 1.5rem;margin-bottom:1.1rem;box-shadow:var(--shadow);
-  }
-  .entry-meta{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem}
-  .entry-meta .date{
-    font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);
-  }
-  .entry-meta .sep{color:var(--line)}
-  .entry h2{
-    font-family:Georgia,"Iowan Old Style","Times New Roman",serif;
-    font-size:1.28rem;line-height:1.3;letter-spacing:-.01em;margin:.1rem 0 .7rem;
-  }
-
-  .entry-body{
-    font-family:Georgia,"Iowan Old Style","Times New Roman",serif;
-    font-size:1.03rem;line-height:1.72;
-  }
-  .entry-body p{margin:0 0 .9rem}
-  .entry-body > *:last-child{margin-bottom:0}
-  .entry-body ul,.entry-body ol{margin:0 0 .9rem;padding-left:1.3rem}
-  .entry-body li{margin-bottom:.3rem}
-  .entry-body h3,.entry-body h4,.entry-body h5{font-family:Georgia,serif;margin:1.3rem 0 .5rem;line-height:1.3}
-  .entry-body blockquote{margin:0 0 .9rem;padding-left:1rem;border-left:3px solid var(--line);color:var(--muted)}
-  .entry-body hr{border:0;border-top:1px solid var(--line);margin:1.4rem 0}
-  .entry-body a{color:var(--accent)}
-  .entry-body code{
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:.86em;background:var(--accent-soft);padding:.12em .42em;border-radius:5px;
-  }
-  .entry-body pre{background:var(--accent-soft);padding:.9rem 1rem;border-radius:10px;overflow:auto;margin:0 0 .9rem}
-  .entry-body pre code{background:none;padding:0;font-size:.85rem}
-  .entry-body img{max-width:100%;height:auto;border-radius:10px;display:block;margin:.6rem 0;cursor:zoom-in}
-
-  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem;margin-top:1.1rem}
-  .gallery figure{margin:0}
-  .gallery img{
-    width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;
-    border:1px solid var(--line);cursor:zoom-in;transition:transform .18s ease;
-  }
-  .gallery img:hover{transform:translateY(-2px)}
-  .gallery figcaption{font-size:.74rem;color:var(--muted);margin-top:.35rem}
-
-  .empty{color:var(--muted);text-align:center;padding:4rem 1rem;font-style:italic}
-
-  footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--muted);font-size:.82rem}
-  footer .wrap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-
-  /* ---------- lightbox ---------- */
-  .lightbox{
-    position:fixed;inset:0;z-index:80;background:rgba(10,9,8,.92);
-    display:flex;align-items:center;justify-content:center;padding:2rem;cursor:zoom-out;
-  }
-  .lightbox img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-
-  /* ---------- modal ---------- */
-  .modal{
-    position:fixed;inset:0;z-index:70;background:rgba(10,9,8,.55);
-    display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow:auto;
-  }
-  .modal-card{
-    background:var(--bg);border:1px solid var(--line);border-radius:16px;
-    width:min(720px,100%);box-shadow:0 30px 70px -20px rgba(0,0,0,.45);
-  }
-  .modal-head{
-    display:flex;align-items:center;justify-content:space-between;gap:1rem;
-    padding:1.1rem 1.4rem;border-bottom:1px solid var(--line);
-  }
-  .modal-head h2{margin:0;font-family:Georgia,serif;font-size:1.1rem}
-  .modal-body{padding:1.4rem}
-  .modal-foot{
-    padding:1rem 1.4rem 1.3rem;border-top:1px solid var(--line);
-    display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;
-  }
-  .close{
-    border:0;background:none;color:var(--muted);font-size:1.4rem;line-height:1;
-    cursor:pointer;padding:.2rem .4rem;border-radius:8px;
-  }
-  .close:hover{color:var(--ink);background:var(--accent-soft)}
-
-  .field{display:block;margin-bottom:1rem}
-  .field > span{
-    display:block;font-size:.72rem;font-weight:700;letter-spacing:.09em;
-    text-transform:uppercase;color:var(--muted);margin-bottom:.4rem;
-  }
-  .field input,.field textarea{
-    width:100%;padding:.6rem .75rem;border-radius:10px;border:1px solid var(--line);
-    background:var(--card);color:inherit;font:inherit;font-size:.95rem;
-  }
-  .field input:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
-  .field textarea{
-    min-height:180px;resize:vertical;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:.88rem;line-height:1.55;
-  }
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-  @media (max-width:560px){.row{grid-template-columns:1fr}}
-
-  .hint{font-size:.78rem;color:var(--muted);margin:-.5rem 0 1rem}
-  .hint code{font-family:ui-monospace,Menlo,monospace;font-size:.9em}
-  .warn{
-    font-size:.8rem;color:#a4441f;background:#fdf0e8;border:1px solid #f2d6c5;
-    padding:.5rem .7rem;border-radius:8px;margin-bottom:1rem;
-  }
-  @media (prefers-color-scheme: dark){
-    .warn{color:#ffb894;background:#33211a;border-color:#4a2e22}
-  }
-  .err{color:#a4441f;font-size:.85rem;margin:-.4rem 0 .9rem}
-  @media (prefers-color-scheme: dark){.err{color:#ffb894}}
-
-  #cOut{
-    background:var(--card);border:1px solid var(--line);border-radius:10px;
-    padding:.9rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:.78rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;
-    max-height:220px;overflow:auto;margin:0;
-  }
-  .preview{
-    border:1px dashed var(--line);border-radius:10px;padding:1rem;
-    font-family:Georgia,serif;font-size:1rem;line-height:1.7;background:var(--card);
-  }
-  .preview img{max-width:100%;border-radius:8px}
-  .filelist{font-size:.8rem;color:var(--muted);margin:.5rem 0 0;padding-left:1.1rem}
-  .filelist code{font-family:ui-monospace,Menlo,monospace}
-
-  .toast{
-    position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
-    background:var(--ink);color:var(--bg);padding:.6rem 1.1rem;border-radius:999px;
-    font-size:.85rem;z-index:100;box-shadow:0 10px 30px rgba(0,0,0,.3);
-  }
+  #zoom{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out;z-index:9}
+  #zoom img{max-width:100%;max-height:100%}
 </style>
 </head>
 <body>
+<div class="page">
 
-<!-- ===== EDIT ME: your title and subtitle ===== -->
-<header class="site-head">
-  <div class="wrap">
-    <p class="kicker">Thesis Journal</p>
-    <h1>Working notes &amp; progress</h1>
-    <p class="sub">A running log of reading, experiments, dead ends and small wins.</p>
-    <p class="stats" id="stats"></p>
+  <!-- Edit your title and subtitle here -->
+  <header>
+    <h1>Thesis Journal</h1>
+    <p>Reading, experiments, dead ends and small wins.</p>
+  </header>
+
+  <div class="tools">
+    <input id="search" type="search" placeholder="Search" aria-label="Search entries">
+    <div id="tags"></div>
   </div>
-</header>
 
-<div class="wrap controls">
-  <input id="search" type="search" placeholder="Search entries…" aria-label="Search entries">
-  <button class="btn primary" id="newBtn">🔒 New entry</button>
-  <button class="btn" id="lockBtn" hidden>Lock</button>
-</div>
-<div class="wrap" id="tagbar"></div>
+  <main id="feed"></main>
 
-<main class="wrap" id="feed"></main>
-
-<footer>
-  <div class="wrap">
+  <footer>
+    <span id="count"></span>
     <span>Thesis journal</span>
-    <span id="footNote"></span>
-  </div>
-</footer>
-
-<!-- lightbox -->
-<div class="lightbox" id="lightbox" hidden><img id="lightboxImg" alt=""></div>
-
-<!-- author gate -->
-<div class="modal" id="gate" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-label="Author sign-in" style="max-width:420px">
-    <div class="modal-head">
-      <h2>Author sign-in</h2>
-      <button class="close" id="closeGate" aria-label="Close">×</button>
-    </div>
-    <div class="modal-body">
-      <label class="field"><span>Password</span>
-        <input type="password" id="gatePass" autocomplete="current-password">
-      </label>
-      <p class="err" id="gateErr" hidden>Wrong password. Try again.</p>
-      <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--muted)">
-        <input type="checkbox" id="gateRemember" checked> Keep me unlocked for this session
-      </label>
-    </div>
-    <div class="modal-foot">
-      <button class="btn primary" id="gateGo">Unlock</button>
-      <span style="flex:1"></span>
-      <button class="btn" id="gateCancel">Cancel</button>
-    </div>
-  </div>
+  </footer>
 </div>
 
-<!-- composer -->
-<div class="modal" id="composer" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-label="New entry">
-    <div class="modal-head">
-      <h2>New entry</h2>
-      <button class="close" id="closeComposer" aria-label="Close">×</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="warn" id="cWarn" hidden></div>
-
-      <div class="row">
-        <label class="field"><span>Date</span><input type="date" id="cDate"></label>
-        <label class="field"><span>Tags (comma separated)</span><input type="text" id="cTags" placeholder="reading, methods"></label>
-      </div>
-
-      <label class="field"><span>Title</span><input type="text" id="cTitle" placeholder="What did you do today?"></label>
-
-      <label class="field"><span>Body</span>
-        <textarea id="cBody" placeholder="Write your update here.
-
-Supports simple markdown:
-## Heading
-**bold**  *italic*  `code`
-- bullet
-1. numbered
-> quote
-[link](https://example.com)
-![caption](images/photo.png)"></textarea>
-      </label>
-
-      <label class="field"><span>Images (optional)</span>
-        <input type="file" id="cImages" accept="image/*" multiple>
-      </label>
-      <p class="hint" id="cFileHint" hidden>
-        Upload these files to the <code>images/</code> folder in your repo with exactly these names.
-      </p>
-      <ul class="filelist" id="cFileList"></ul>
-
-      <label class="field"><span>Preview</span><div class="preview" id="cPreview"></div></label>
-
-      <label class="field"><span>Generated code</span></label>
-      <pre id="cOut"></pre>
-      <p class="hint" style="margin-top:.6rem">
-        Paste this inside the <code>[ ]</code> in <code>entries.js</code> — or just use
-        <strong>Download entries.js</strong> below to get the whole updated file.
-      </p>
-    </div>
-
-    <div class="modal-foot">
-      <button class="btn primary" id="copyBtn">Copy code</button>
-      <button class="btn" id="downloadBtn">Download entries.js</button>
-      <span style="flex:1"></span>
-      <button class="btn" id="cancelBtn">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- data file -->
-<script src="entries.js"></script>
+<div id="zoom" hidden><img alt=""></div>
 
 <script>
+// Reads entries.js whether it says "const ENTRIES = [...]" or "window.ENTRIES = [...]".
+function readEntriesGlobal() {
+  return (typeof ENTRIES !== "undefined") ? ENTRIES : window.ENTRIES;
+}
+
 (function () {
   "use strict";
 
-  var ENTRIES = (typeof window.ENTRIES !== "undefined" && Array.isArray(window.ENTRIES))
-    ? window.ENTRIES : [];
+  var ENTRIES = [];
+  var $ = function (id) { return document.getElementById(id); };
+  var feed = $("feed"), tagsEl = $("tags"), search = $("search"), count = $("count");
+  var activeTag = null;
 
-  /* ---------------- DOM refs ---------------- */
-  var feed        = document.getElementById("feed");
-  var tagbar      = document.getElementById("tagbar");
-  var searchEl    = document.getElementById("search");
-  var statsEl     = document.getElementById("stats");
-  var footEl      = document.getElementById("footNote");
-  var lightbox    = document.getElementById("lightbox");
-  var lightboxImg = document.getElementById("lightboxImg");
-  var composer    = document.getElementById("composer");
-  var gate        = document.getElementById("gate");
-  var gatePass    = document.getElementById("gatePass");
-  var gateErr     = document.getElementById("gateErr");
-  var newBtn      = document.getElementById("newBtn");
-  var lockBtn     = document.getElementById("lockBtn");
-  var activeTag   = null;
-
-  /* ============================================================
-     AUTHOR GATE
-     ------------------------------------------------------------
-     NOTE: this is client-side only. It keeps casual visitors out
-     of the composer, but it is NOT real security — entries.js is
-     public either way. Only you can push to your GitHub repo.
-
-     To change the password: edit AUTH.plain below.
-
-     To hide the password from view (recommended), compute its
-     SHA-256 hex and put it in AUTH.hash, then set AUTH.plain to "".
-     In your browser console on this page, run:
-
-       crypto.subtle.digest('SHA-256', new TextEncoder().encode('5288'))
-         .then(b => console.log([...new Uint8Array(b)]
-           .map(x => x.toString(16).padStart(2,'0')).join('')))
-
-     Paste the hex output into AUTH.hash.
-     ============================================================ */
-  var AUTH = {
-    plain: "5288",   // ← current password (change me any time)
-    hash:  ""        // ← optional SHA-256 hex; takes priority if set
-  };
-  var AUTH_KEY = "thesis-journal-unlocked";
-  var unlocked = false;
-
-  function sha256Hex(text) {
-    if (!(window.crypto && crypto.subtle)) return Promise.resolve(null);
-    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
-      return Array.prototype.map.call(new Uint8Array(buf), function (b) {
-        return b.toString(16).padStart(2, "0");
-      }).join("");
-    });
-  }
-
-  function checkPassword(input) {
-    if (AUTH.hash) {
-      return sha256Hex(input).then(function (h) { return h === AUTH.hash; });
-    }
-    return Promise.resolve(input === AUTH.plain);
-  }
-
-  function setUnlocked(on, remember) {
-    unlocked = on;
-    try {
-      if (on && remember) sessionStorage.setItem(AUTH_KEY, "1");
-      if (!on) sessionStorage.removeItem(AUTH_KEY);
-    } catch (e) {}
-    newBtn.textContent = on ? "＋ New entry" : "🔒 New entry";
-    lockBtn.hidden = !on;
-  }
-
-  /* ---------------- helpers ---------------- */
-
+  /* ---------- helpers ---------- */
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-
-  function parseDate(iso) {
+  function toDate(iso) {
     var s = String(iso || "");
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s += "T00:00:00";
     var d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
+    return isNaN(d) ? null : d;
+  }
+  function niceDate(iso) {
+    var d = toDate(iso);
+    return d ? d.toLocaleDateString(undefined, { weekday: "short", month: "long", day: "numeric", year: "numeric" }) : (iso || "Undated");
+  }
+  function month(iso) {
+    var d = toDate(iso);
+    return d ? d.toLocaleDateString(undefined, { month: "long", year: "numeric" }) : "Undated";
   }
 
-  function fmtDate(iso) {
-    var d = parseDate(iso);
-    if (!d) return iso || "Undated";
-    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-  }
-
-  function monthKey(iso) {
-    var d = parseDate(iso);
-    if (!d) return "Undated";
-    return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-  }
-
-  function todayISO() {
-    var d = new Date();
-    return d.getFullYear() + "-" +
-           String(d.getMonth() + 1).padStart(2, "0") + "-" +
-           String(d.getDate()).padStart(2, "0");
-  }
-
-  /* ---------------- tiny markdown ---------------- */
-
-  function inlineMd(s) {
+  /* ---------- small markdown ---------- */
+  function inline(s) {
     return s
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
@@ -458,378 +142,128 @@ Supports simple markdown:
       .replace(/(^|[^*\w])\*([^*\n]+)\*/g, "$1<em>$2</em>")
       .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
   }
-
-  function mdToHtml(src) {
-    var esc0 = function (s) {
-      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    };
-    var lines = esc0(String(src || "").replace(/\r\n?/g, "\n")).split("\n");
-    var out = [], para = [], list = null, code = null;
-
-    function flushPara() {
-      if (para.length) { out.push("<p>" + inlineMd(para.join(" ")) + "</p>"); para = []; }
-    }
-    function flushList() {
-      if (list) { out.push("</" + list + ">"); list = null; }
-    }
-    function flushAll() { flushPara(); flushList(); }
-
-    for (var i = 0; i < lines.length; i++) {
-      var raw = lines[i];
+  function md(src) {
+    var lines = String(src || "").replace(/\r\n?/g, "\n")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").split("\n");
+    var out = [], para = [], list = null, code = null, m;
+    function endPara() { if (para.length) { out.push("<p>" + inline(para.join(" ")) + "</p>"); para = []; } }
+    function endList() { if (list) { out.push("</" + list + ">"); list = null; } }
+    lines.forEach(function (raw) {
       var line = raw.trim();
-
-      if (code !== null) {
+      if (code) {
         if (line.indexOf("```") === 0) { out.push("<pre><code>" + code.join("\n") + "</code></pre>"); code = null; }
         else code.push(raw);
-        continue;
+        return;
       }
-      if (line.indexOf("```") === 0) { flushAll(); code = []; continue; }
-      if (!line) { flushAll(); continue; }
-
-      var m;
-      if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
-        flushAll();
-        var lvl = Math.min(m[1].length + 2, 6);
-        out.push("<h" + lvl + ">" + inlineMd(m[2]) + "</h" + lvl + ">");
-        continue;
+      if (line.indexOf("```") === 0) { endPara(); endList(); code = []; return; }
+      if (!line) { endPara(); endList(); return; }
+      if ((m = line.match(/^(#{1,6})\s+(.*)$/))) { endPara(); endList(); var h = Math.min(m[1].length + 2, 6); out.push("<h" + h + ">" + inline(m[2]) + "</h" + h + ">"); return; }
+      if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) { endPara(); endList(); out.push("<hr>"); return; }
+      if ((m = line.match(/^[-*+]\s+(.*)$/)) || (m = line.match(/^\d+[.)]\s+(.*)$/))) {
+        var type = /^\d/.test(line) ? "ol" : "ul";
+        endPara();
+        if (list !== type) { endList(); out.push("<" + type + ">"); list = type; }
+        out.push("<li>" + inline(m[1]) + "</li>");
+        return;
       }
-      if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) { flushAll(); out.push("<hr>"); continue; }
-      if ((m = line.match(/^[-*+]\s+(.*)$/))) {
-        flushPara();
-        if (list !== "ul") { flushList(); out.push("<ul>"); list = "ul"; }
-        out.push("<li>" + inlineMd(m[1]) + "</li>");
-        continue;
-      }
-      if ((m = line.match(/^\d+[.)]\s+(.*)$/))) {
-        flushPara();
-        if (list !== "ol") { flushList(); out.push("<ol>"); list = "ol"; }
-        out.push("<li>" + inlineMd(m[1]) + "</li>");
-        continue;
-      }
-      if ((m = line.match(/^>\s?(.*)$/))) {
-        flushAll();
-        out.push("<blockquote>" + inlineMd(m[1]) + "</blockquote>");
-        continue;
-      }
+      if ((m = line.match(/^&gt;\s?(.*)$/))) { endPara(); endList(); out.push("<blockquote>" + inline(m[1]) + "</blockquote>"); return; }
       para.push(line);
-    }
-
-    if (code !== null) out.push("<pre><code>" + code.join("\n") + "</code></pre>");
-    flushAll();
+    });
+    if (code) out.push("<pre><code>" + code.join("\n") + "</code></pre>");
+    endPara(); endList();
     return out.join("\n");
   }
 
-  /* ---------------- rendering ---------------- */
-
+  /* ---------- feed ---------- */
   function entryHTML(e) {
+    var pics = (e.images || []).map(function (im) { return typeof im === "string" ? { src: im } : (im || {}); })
+      .filter(function (im) { return im.src; });
     var tags = (e.tags || []).filter(Boolean);
-    var meta =
-      '<div class="entry-meta">' +
-        '<span class="date">' + esc(fmtDate(e.date)) + "</span>" +
-        (tags.length ? '<span class="sep">·</span>' : "") +
-        tags.map(function (t) {
-          return '<button class="tag" data-tag="' + esc(String(t).toLowerCase()) + '">#' + esc(t) + "</button>";
-        }).join("") +
-      "</div>";
-
-    var imgs = (e.images || []).map(function (im) {
-      return typeof im === "string" ? { src: im } : (im || {});
-    }).filter(function (im) { return im.src; });
-
-    var gallery = imgs.length
-      ? '<div class="gallery">' + imgs.map(function (im) {
-          return "<figure>" +
-            '<img src="' + esc(im.src) + '" alt="' + esc(im.caption || "") + '" loading="lazy">' +
-            (im.caption ? "<figcaption>" + esc(im.caption) + "</figcaption>" : "") +
-          "</figure>";
-        }).join("") + "</div>"
-      : "";
-
-    return '<article class="entry">' +
-      meta +
+    return "<article>" +
+      '<div class="meta">' + esc(niceDate(e.date)) +
+        (tags.length ? " &middot; " + tags.map(esc).join(", ") : "") + "</div>" +
       (e.title ? "<h2>" + esc(e.title) + "</h2>" : "") +
-      '<div class="entry-body">' + mdToHtml(e.body || "") + "</div>" +
-      gallery +
+      '<div class="body">' + md(e.body) + "</div>" +
+      (pics.length ? '<div class="pics">' + pics.map(function (im) {
+        return '<figure><img src="' + esc(im.src) + '" alt="' + esc(im.caption || "") + '" loading="lazy">' +
+          (im.caption ? "<figcaption>" + esc(im.caption) + "</figcaption>" : "") + "</figure>";
+      }).join("") + "</div>" : "") +
     "</article>";
   }
 
   function render() {
-    var q = searchEl.value.trim().toLowerCase();
+    var q = search.value.trim().toLowerCase();
 
-    // tag bar (from all entries, not filtered)
     var counts = {};
     ENTRIES.forEach(function (e) {
-      (e.tags || []).forEach(function (t) {
-        var k = String(t).toLowerCase();
-        counts[k] = (counts[k] || 0) + 1;
-      });
+      (e.tags || []).forEach(function (t) { t = String(t).toLowerCase(); counts[t] = (counts[t] || 0) + 1; });
     });
-    var keys = Object.keys(counts).sort();
-    tagbar.innerHTML = keys.map(function (k) {
-      return '<button class="tag' + (k === activeTag ? " active" : "") + '" data-tag="' + esc(k) + '">' +
-        "#" + esc(k) + ' <span style="opacity:.55">' + counts[k] + "</span></button>";
-    }).join("");
+    var names = Object.keys(counts).sort();
+    tagsEl.innerHTML = names.length
+      ? '<button data-tag="" class="' + (activeTag ? "" : "on") + '">all</button>' +
+        names.map(function (t) {
+          return ' &middot; <button data-tag="' + esc(t) + '" class="' + (t === activeTag ? "on" : "") + '">' + esc(t) + "</button>";
+        }).join("")
+      : "";
 
-    var items = ENTRIES.filter(function (e) {
+    var list = ENTRIES.filter(function (e) {
       if (activeTag && !(e.tags || []).some(function (t) { return String(t).toLowerCase() === activeTag; })) return false;
       if (!q) return true;
-      var hay = (e.title || "") + " " + (e.body || "") + " " + (e.tags || []).join(" ") + " " + (e.date || "");
-      return hay.toLowerCase().indexOf(q) !== -1;
-    });
+      return [e.title, e.body, (e.tags || []).join(" "), e.date].join(" ").toLowerCase().indexOf(q) !== -1;
+    }).sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
 
-    items.sort(function (a, b) {
-      return String(b.date || "").localeCompare(String(a.date || ""));
-    });
-
-    if (!items.length) {
-      feed.innerHTML = '<p class="empty">' +
-        (ENTRIES.length ? "No entries match that search." : "No entries yet — click “New entry” to add your first one.") +
-        "</p>";
+    if (!list.length) {
+      feed.innerHTML = '<p class="empty">' + (ENTRIES.length ? "Nothing matches that." : "No entries yet.") + "</p>";
     } else {
-      var html = "", group = null;
-      items.forEach(function (e) {
-        var g = monthKey(e.date);
-        if (g !== group) { html += '<h2 class="month">' + esc(g) + "</h2>"; group = g; }
+      var html = "", last = null;
+      list.forEach(function (e) {
+        var mo = month(e.date);
+        if (mo !== last) { html += '<h3 class="month">' + esc(mo) + "</h3>"; last = mo; }
         html += entryHTML(e);
       });
       feed.innerHTML = html;
     }
-
-    // stats
-    var dated = ENTRIES.map(function (e) { return e.date; }).filter(Boolean).sort();
-    statsEl.textContent = ENTRIES.length
-      ? ENTRIES.length + (ENTRIES.length === 1 ? " entry" : " entries") +
-        (dated.length ? " · latest " + fmtDate(dated[dated.length - 1]) : "")
-      : "No entries yet";
-    footEl.textContent = ENTRIES.length + " logged";
+    count.textContent = ENTRIES.length + (ENTRIES.length === 1 ? " entry" : " entries");
   }
 
-  /* ---------------- toast ---------------- */
-
-  function toast(msg) {
-    var t = document.createElement("div");
-    t.className = "toast";
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 1800);
-  }
-
-  /* ---------------- gate interactions ---------------- */
-
-  function openGate() {
-    gatePass.value = "";
-    gateErr.hidden = true;
-    gate.hidden = false;
-    gatePass.focus();
-  }
-  function closeGate() { gate.hidden = true; }
-
-  function tryUnlock() {
-    checkPassword(gatePass.value).then(function (ok) {
-      if (!ok) {
-        gateErr.hidden = false;
-        gatePass.select();
-        return;
-      }
-      var remember = document.getElementById("gateRemember").checked;
-      setUnlocked(true, remember);
-      closeGate();
-      openComposer();
-    });
-  }
-
-  /* ---------------- feed interactions ---------------- */
-
-  searchEl.addEventListener("input", render);
-
-  document.addEventListener("click", function (ev) {
-    var tagBtn = ev.target.closest(".tag");
-    if (tagBtn && tagBtn.dataset.tag !== undefined) {
-      var t = tagBtn.dataset.tag;
-      activeTag = (activeTag === t) ? null : t;
-      render();
-      return;
-    }
-    var img = ev.target.closest(".gallery img, .entry-body img");
-    if (img) {
-      lightboxImg.src = img.src;
-      lightbox.hidden = false;
-      return;
-    }
+  search.addEventListener("input", render);
+  tagsEl.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    activeTag = b.dataset.tag || null;
+    render();
   });
 
-  lightbox.addEventListener("click", function () {
-    lightbox.hidden = true;
-    lightboxImg.src = "";
+  /* ---------- image zoom ---------- */
+  var zoom = $("zoom"), zoomImg = zoom.querySelector("img");
+  feed.addEventListener("click", function (ev) {
+    var img = ev.target.closest("img");
+    if (!img) return;
+    zoomImg.src = img.src;
+    zoom.hidden = false;
   });
-
-  /* ---------------- composer ---------------- */
-
-  var cDate     = document.getElementById("cDate");
-  var cTitle    = document.getElementById("cTitle");
-  var cTags     = document.getElementById("cTags");
-  var cBody     = document.getElementById("cBody");
-  var cImages   = document.getElementById("cImages");
-  var cOut      = document.getElementById("cOut");
-  var cPreview  = document.getElementById("cPreview");
-  var cWarn     = document.getElementById("cWarn");
-  var cFileList = document.getElementById("cFileList");
-  var cFileHint = document.getElementById("cFileHint");
-
-  function cleanName(name) {
-    return String(name)
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9._-]/g, "");
-  }
-
-  function currentEntry() {
-    var files = Array.prototype.slice.call(cImages.files || []).map(function (f) {
-      return "images/" + cleanName(f.name);
-    });
-    return {
-      date: cDate.value || todayISO(),
-      title: cTitle.value.trim(),
-      tags: cTags.value.split(",").map(function (s) { return s.trim(); }).filter(Boolean),
-      images: files,
-      body: cBody.value.replace(/\s+$/, "")
-    };
-  }
-
-  function serialize(e) {
-    var L = [];
-    L.push("  {");
-    L.push("    date: " + JSON.stringify(e.date || "") + ",");
-    if (e.title) L.push("    title: " + JSON.stringify(e.title) + ",");
-    if (e.tags && e.tags.length) L.push("    tags: " + JSON.stringify(e.tags) + ",");
-    if (e.images && e.images.length) L.push("    images: " + JSON.stringify(e.images) + ",");
-    L.push("    body: `");
-    L.push(String(e.body || "").replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${"));
-    L.push("`");
-    L.push("  },");
-    return L.join("\n");
-  }
-
-  function updateComposer() {
-    var e = currentEntry();
-
-    cOut.textContent = serialize(e);
-
-    cPreview.innerHTML = e.title ? "<h3 style='margin-top:0'>" + esc(e.title) + "</h3>" : "";
-    cPreview.innerHTML += mdToHtml(cBody.value);
-
-    var files = Array.prototype.slice.call(cImages.files || []);
-    cFileList.innerHTML = files.map(function (f) {
-      return "<li><code>images/" + esc(cleanName(f.name)) + "</code></li>";
-    }).join("");
-    cFileHint.hidden = files.length === 0;
-
-    cWarn.hidden = true;
-    if (/`/.test(cBody.value)) {
-      cWarn.hidden = false;
-      cWarn.textContent = "Your text contains a backtick (`). It will be escaped in the downloaded file — that's fine, just double-check the result.";
-    }
-  }
-
-  function openComposer() {
-    cDate.value = todayISO();
-    cTitle.value = "";
-    cTags.value = "";
-    cBody.value = "";
-    cImages.value = "";
-    cPreview.innerHTML = "";
-    cFileList.innerHTML = "";
-    cFileHint.hidden = true;
-    composer.hidden = false;
-    updateComposer();
-    cTitle.focus();
-  }
-
-  function closeComposer() { composer.hidden = true; }
-
-  /* ---------------- wire everything up ---------------- */
-
-  newBtn.addEventListener("click", function () {
-    if (unlocked) openComposer();
-    else openGate();
-  });
-
-  lockBtn.addEventListener("click", function () {
-    setUnlocked(false);
-    toast("Locked");
-  });
-
-  document.getElementById("gateGo").addEventListener("click", tryUnlock);
-  document.getElementById("gateCancel").addEventListener("click", closeGate);
-  document.getElementById("closeGate").addEventListener("click", closeGate);
-  gatePass.addEventListener("keydown", function (ev) {
-    if (ev.key === "Enter") { ev.preventDefault(); tryUnlock(); }
-  });
-  gate.addEventListener("click", function (ev) { if (ev.target === gate) closeGate(); });
-
-  document.getElementById("closeComposer").addEventListener("click", closeComposer);
-  document.getElementById("cancelBtn").addEventListener("click", closeComposer);
-  composer.addEventListener("click", function (ev) { if (ev.target === composer) closeComposer(); });
-
-  [cDate, cTitle, cTags, cBody, cImages].forEach(function (el) {
-    el.addEventListener("input", updateComposer);
-    el.addEventListener("change", updateComposer);
-  });
+  zoom.addEventListener("click", function () { zoom.hidden = true; zoomImg.src = ""; });
 
   document.addEventListener("keydown", function (ev) {
-    if (ev.key !== "Escape") return;
-    if (!lightbox.hidden)      { lightbox.hidden = true; lightboxImg.src = ""; }
-    else if (!gate.hidden)     { closeGate(); }
-    else if (!composer.hidden) { closeComposer(); }
+    if (ev.key === "Escape" && !zoom.hidden) { zoom.hidden = true; zoomImg.src = ""; }
   });
 
-  document.getElementById("copyBtn").addEventListener("click", function () {
-    var text = cOut.textContent;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        toast("Copied — paste it into entries.js");
-      }, function () { fallbackCopy(text); });
-    } else {
-      fallbackCopy(text);
-    }
-  });
-
-  function fallbackCopy(text) {
-    var ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand("copy"); toast("Copied — paste it into entries.js"); }
-    catch (err) { toast("Select the code and copy manually"); }
-    ta.remove();
+  /* ---------- load entries (always the fresh copy) ---------- */
+  function start(list) {
+    ENTRIES = Array.isArray(list) ? list.slice() : [];
+    render();
   }
-
-  document.getElementById("downloadBtn").addEventListener("click", function () {
-    var all = [currentEntry()].concat(ENTRIES);
-    var file = "// Thesis journal entries.\n" +
-               "// Order here doesn't matter — the site sorts by date, newest first.\n" +
-               "const ENTRIES = [\n\n" +
-               all.map(serialize).join("\n\n") +
-               "\n\n];\n";
-
-    var blob = new Blob([file], { type: "text/javascript" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "entries.js";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    toast("Downloaded — upload it over entries.js in your repo");
-  });
-
-  /* ---------------- restore session unlock ---------------- */
-  try {
-    if (sessionStorage.getItem(AUTH_KEY) === "1") setUnlocked(true, false);
-  } catch (e) {}
-
-  /* ---------------- go ---------------- */
-  render();
+  // entries.json is written by admin.html. Older sites used entries.js, so fall back to that.
+  fetch("entries.json?v=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(start)
+    .catch(function () {
+      var s = document.createElement("script");
+      s.src = "entries.js?v=" + Date.now();
+      s.onload = function () { start(readEntriesGlobal()); };
+      s.onerror = function () { start([]); };
+      document.body.appendChild(s);
+    });
 })();
 </script>
 </body>
