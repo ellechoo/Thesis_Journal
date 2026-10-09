@@ -136,8 +136,8 @@
       <div class="thumbs" id="eOld"></div>
     </div>
 
-    <label for="ePics" id="ePicsLabel">Photos &amp; videos <small>(optional — videos up to 50 MB)</small></label>
-    <input id="ePics" type="file" accept="image/*,video/*" multiple>
+    <label for="ePics" id="ePicsLabel">Photos, videos &amp; PDFs <small>(optional — videos up to 50 MB)</small></label>
+    <input id="ePics" type="file" accept="image/*,video/*,application/pdf,.pdf" multiple>
     <div class="thumbs" id="eNew"></div>
 
     <div class="actions">
@@ -337,6 +337,58 @@
   function isVideoFile(f) { return /^video\//.test(f.type) || /\.(mp4|m4v|mov|webm)$/i.test(f.name); }
   function isVideoPath(p) { return /\.(mp4|m4v|mov|webm|ogv)$/i.test(String(p)); }
 
+  /* ---------- PDFs: each page becomes an image ---------- */
+  var PDF_PAGE_LIMIT = 40;
+  var PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  function isPdfFile(f) { return f.type === "application/pdf" || /\.pdf$/i.test(f.name); }
+
+  // The PDF reader is only downloaded the first time you add a PDF.
+  function loadPdfReader() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = PDFJS + "pdf.min.js";
+      sc.onload = function () {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      };
+      sc.onerror = function () { reject(new Error("Couldn't load the PDF reader. Check your internet connection.")); };
+      document.head.appendChild(sc);
+    });
+  }
+
+  async function pdfToImages(file, onPage) {
+    var lib = await loadPdfReader();
+    var pdf;
+    try {
+      pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    } catch (e) {
+      throw new Error("Couldn't open “" + file.name + "”. If it's password-protected, save an unlocked copy and try again.");
+    }
+    if (pdf.numPages > PDF_PAGE_LIMIT) {
+      var n = pdf.numPages; pdf.destroy();
+      throw new Error("“" + file.name + "” has " + n + " pages. PDFs can have up to " + PDF_PAGE_LIMIT + " pages — try splitting it.");
+    }
+    var pages = [];
+    for (var i = 1; i <= pdf.numPages; i++) {
+      onPage(i, pdf.numPages);
+      var page = await pdf.getPage(i);
+      var base = page.getViewport({ scale: 1 });
+      var scale = Math.min(3, 1600 / Math.max(base.width, base.height));  // about 1600px on the long side
+      var vp = page.getViewport({ scale: scale });
+      var cv = document.createElement("canvas");
+      cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+      var ctx = cv.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      var blob = await new Promise(function (r) { cv.toBlob(r, "image/jpeg", 0.88); });
+      pages.push(new Uint8Array(await blob.arrayBuffer()));
+      page.cleanup();
+    }
+    pdf.destroy();
+    return pages;
+  }
+
   async function uploadPhotos(files, date, progress) {
     // Check sizes first so nothing half-uploads.
     files.forEach(function (f) {
@@ -345,20 +397,40 @@
           VIDEO_LIMIT_MB + " MB — try a shorter clip or export it at a smaller size.");
       }
     });
-    var paths = [];
+
+    // Prepare everything first: shrink photos, turn PDF pages into images.
+    var items = [];
     for (var i = 0; i < files.length; i++) {
-      var video = isVideoFile(files[i]);
-      progress(files.length > 1
-        ? "Uploading file " + (i + 1) + " of " + files.length + (video ? " (videos can take a minute)…" : "…")
-        : (video ? "Uploading video — this can take a minute…" : "Uploading photo…"));
-      var p = video
-        ? await files[i].arrayBuffer().then(function (b) { return { bytes: new Uint8Array(b), jpg: false }; })
-        : await preparePhoto(files[i]);
-      var folder = video ? "videos/" : "images/";
-      var name = photoName(date, files[i], p.jpg);
-      if (await getFile(folder + name)) name = name.replace(/(\.[a-z0-9]+)$/, "-" + Date.now().toString(36) + "$1");
-      await putFile(folder + name, bytesToB64(p.bytes), (video ? "Add video " : "Add photo ") + name);
-      paths.push(folder + name);
+      var f = files[i];
+      if (isPdfFile(f)) {
+        var stem = String(f.name).replace(/\.pdf$/i, "");
+        var pages = await pdfToImages(f, function (n, total) {
+          progress("Converting “" + f.name + "” — page " + n + " of " + total + "…");
+        });
+        pages.forEach(function (bytes, k) {
+          items.push({ bytes: bytes, folder: "images/", kind: "page",
+            name: photoName(date, { name: stem + "-page-" + (k + 1) + ".jpg" }, true) });
+        });
+      } else if (isVideoFile(f)) {
+        items.push({ bytes: new Uint8Array(await f.arrayBuffer()), folder: "videos/", kind: "video",
+          name: photoName(date, f, false) });
+      } else {
+        progress("Preparing photos…");
+        var p = await preparePhoto(f);
+        items.push({ bytes: p.bytes, folder: "images/", kind: "photo", name: photoName(date, f, p.jpg) });
+      }
+    }
+
+    var paths = [];
+    for (var j = 0; j < items.length; j++) {
+      var it = items[j];
+      progress(items.length > 1
+        ? "Uploading " + (j + 1) + " of " + items.length + (it.kind === "video" ? " (videos can take a minute)…" : "…")
+        : (it.kind === "video" ? "Uploading video — this can take a minute…" : "Uploading…"));
+      var name = it.name;
+      if (await getFile(it.folder + name)) name = name.replace(/(\.[a-z0-9]+)$/, "-" + Date.now().toString(36) + "$1");
+      await putFile(it.folder + name, bytesToB64(it.bytes), "Add " + (it.kind === "page" ? "PDF page " : it.kind + " ") + name);
+      paths.push(it.folder + name);
     }
     return paths;
   }
@@ -439,6 +511,9 @@
 
   ePics.addEventListener("change", function () {
     $("eNew").innerHTML = Array.prototype.map.call(ePics.files, function (f) {
+      if (isPdfFile(f)) {
+        return '<div class="thumb"><div class="vid">PDF<br>' + esc(f.name) + "</div></div>";
+      }
       var url = URL.createObjectURL(f);
       return '<div class="thumb">' + (isVideoFile(f)
         ? '<video src="' + url + '#t=0.1" muted playsinline preload="metadata"></video>'
@@ -455,7 +530,7 @@
     eDate.value = (d && d.date) || today();
     clearPicker();
     $("eHead").textContent = "New entry";
-    $("ePicsLabel").innerHTML = "Photos &amp; videos <small>(optional — videos up to 50 MB)</small>";
+    $("ePicsLabel").innerHTML = "Photos, videos &amp; PDFs <small>(optional — videos up to 50 MB)</small>";
     $("eOldWrap").hidden = true;
     $("eCancel").hidden = true;
     eSave.textContent = "Publish";
@@ -471,7 +546,7 @@
     keptImages = (e.images || []).map(function (im) { return { im: im, keep: true }; });
     clearPicker();
     $("eHead").textContent = "Editing entry";
-    $("ePicsLabel").innerHTML = "Add more photos or videos <small>(optional)</small>";
+    $("ePicsLabel").innerHTML = "Add more photos, videos or PDFs <small>(optional)</small>";
     drawOldPhotos();
     $("eCancel").hidden = false;
     eSave.textContent = "Save changes";
