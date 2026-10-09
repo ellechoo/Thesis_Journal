@@ -1,23 +1,23 @@
 [
   {
-    "id": "mv09g1hbgkzs",
-    "date": "2026-10-08",
-    "title": "Test Title",
-    "tags": [
-      "Test"
-    ],
-    "body": "Testing notes.",
-    "images": [
-      "images/2026-10-08-18d726c3-4e6c-4266-b58e-308dda1d4890.jpeg"
-    ]
-  },
-  {
     "id": "mv0ccmkuk62j",
     "date": "2026-09-04",
     "title": "256 Part 1",
     "tags": [],
     "body": "https://www.figma.com/deck/U6ApjCZ7Dhk0861l6fYu0h/256-Part-1?node-id=2-107&t=IaDKPjzNPaPIeFQY-1",
-    "images": []
+    "images": [
+      "images/2026-09-04-256-part-1-page-1.jpg",
+      "images/2026-09-04-256-part-1-page-2.jpg",
+      "images/2026-09-04-256-part-1-page-3.jpg",
+      "images/2026-09-04-256-part-1-page-4.jpg",
+      "images/2026-09-04-256-part-1-page-5.jpg",
+      "images/2026-09-04-256-part-1-page-6.jpg",
+      "images/2026-09-04-256-part-1-page-7.jpg",
+      "images/2026-09-04-256-part-1-page-8.jpg",
+      "images/2026-09-04-256-part-1-page-9.jpg",
+      "images/2026-09-04-256-part-1-page-10.jpg",
+      "images/2026-09-04-256-part-1-page-11.jpg"
+    ]
   },
   {
     "id": "mv0c3sialtt4",
@@ -25,6 +25,12 @@
     "title": "Thesis Kickoff Presentation",
     "tags": [],
     "body": "https://www.figma.com/deck/DRb0bknD30eIWZsflyyFQp/elle-intro?node-id=2-107&t=QrS2n49YuA1hHrm8-1",
-    "images": []
+    "images": [
+      "images/2026-08-28-elle-intro-page-1.jpg",
+      "images/2026-08-28-elle-intro-page-2.jpg",
+      "images/2026-08-28-elle-intro-page-3.jpg",
+      "images/2026-08-28-elle-intro-page-4.jpg",
+      "images/2026-08-28-elle-intro-page-5.jpg"
+    ]
   }
 ]
