@@ -123,6 +123,12 @@ function readEntriesGlobal() {
       }).join("") + "</div>" : "");
   }
 
+  function keepLastWordsTogether(el) {
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), node, last = null;
+    while ((node = walker.nextNode())) if (/\S\s+\S/.test(node.nodeValue)) last = node;
+    if (last) last.nodeValue = last.nodeValue.replace(/\s+(\S+\s*)$/, "\u00a0$1");
+  }
+
   function entryHTML(e) {
     var pics = (e.images || []).map(function (im) { return typeof im === "string" ? { src: im } : (im || {}); })
       .filter(function (im) { return im.src; });
@@ -174,6 +180,11 @@ function readEntriesGlobal() {
         html += entryHTML(e);
       });
       feed.innerHTML = html;
+      // No orphans in browsers that don't support "text-wrap: pretty" yet:
+      // glue the last two words of each paragraph together.
+      if (!(window.CSS && CSS.supports && CSS.supports("text-wrap", "pretty"))) {
+        feed.querySelectorAll(".body p, .body li, .body blockquote").forEach(keepLastWordsTogether);
+      }
       // Tell each photo's frame its shape so rows line up without cropping.
       feed.querySelectorAll(".pics img").forEach(function (img) {
         function setShape() {

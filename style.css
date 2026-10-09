@@ -197,6 +197,13 @@ article h2 {
   font-size: .92rem;       /* size of the entry text */
 }
 
+/* No orphans: never leave a single word alone on the last line */
+.body p,
+.body li,
+.body blockquote {
+  text-wrap: pretty;
+}
+
 .body p {
   margin: 0 0 1rem;
 }
