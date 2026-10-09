@@ -3,97 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thesis Journal</title>
+<title>Elle's Thesis Journal</title>
 <meta name="description" content="Progress log for my thesis project.">
-<style>
-  :root{
-    --paper:#fbfaf7;
-    --ink:#222;
-    --muted:#7a766f;
-    --rule:#dedad2;
-    --link:#8a3b12;
-    --field:#fff;
-    --bad:#a4441f;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --paper:#1a1918;
-      --ink:#e6e2da;
-      --muted:#948e84;
-      --rule:#35322e;
-      --link:#e0a27a;
-      --field:#222120;
-      --bad:#ffb894;
-    }
-  }
-  *{box-sizing:border-box}
-  [hidden]{display:none !important}
-  body{
-    margin:0;background:var(--paper);color:var(--ink);
-    font:18px/1.65 Charter,"Iowan Old Style",Georgia,serif;
-  }
-  .page{max-width:640px;margin:0 auto;padding:3.5rem 1.25rem 4rem}
-  a{color:var(--link)}
-  small,.meta{font-size:.82rem;color:var(--muted)}
-
-  header h1{font-size:1.9rem;font-weight:normal;margin:0}
-  header p{margin:.2rem 0 0;color:var(--muted)}
-
-  .tools{margin:2rem 0 2.5rem;padding-bottom:1rem;border-bottom:1px solid var(--rule)}
-  #search{
-    width:100%;font:inherit;font-size:1rem;color:inherit;background:transparent;
-    border:0;border-bottom:1px solid var(--rule);padding:.3rem 0;margin-bottom:.6rem;
-  }
-  #search:focus{outline:none;border-bottom-color:var(--ink)}
-  #tags{font-size:.88rem;color:var(--muted)}
-  #tags button{font:inherit;background:none;border:0;padding:0;color:var(--muted);cursor:pointer}
-  #tags button:hover{color:var(--ink)}
-  #tags button.on{color:var(--ink);text-decoration:underline}
-
-  .month{font-size:.95rem;font-style:italic;font-weight:normal;color:var(--muted);margin:3rem 0 1rem}
-  .month:first-child{margin-top:0}
-  article{margin-bottom:2.5rem}
-  article h2{font-size:1.3rem;font-weight:normal;margin:.1rem 0 .5rem;line-height:1.3}
-  .body p{margin:0 0 1rem}
-  .body h3,.body h4,.body h5{font-size:1.05rem;margin:1.4rem 0 .4rem}
-  .body ul,.body ol{padding-left:1.3rem;margin:0 0 1rem}
-  .body blockquote{margin:0 0 1rem;padding-left:1rem;border-left:2px solid var(--rule);color:var(--muted)}
-  .body hr{border:0;border-top:1px solid var(--rule);margin:1.5rem 0}
-  .body code{font:.85em ui-monospace,Menlo,Consolas,monospace}
-  .body pre{font-size:.85rem;overflow:auto;padding:.8rem;border:1px solid var(--rule);margin:0 0 1rem}
-  .body img,.pics img{max-width:100%;display:block;cursor:zoom-in}
-  .pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem;margin-top:.8rem}
-  .pics figure{margin:0}
-  .pics img{width:100%;aspect-ratio:4/3;object-fit:cover}
-  .pics figcaption{font-size:.8rem;color:var(--muted)}
-  .empty{color:var(--muted);font-style:italic}
-
-  footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.85rem;color:var(--muted);display:flex;justify-content:space-between}
-
-  #zoom{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1.5rem;cursor:zoom-out;z-index:9}
-  #zoom img{max-width:100%;max-height:100%}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="page">
 
   <!-- Edit your title and subtitle here -->
-  <header>
-    <h1>Thesis Journal</h1>
-    <p>Reading, experiments, dead ends and small wins.</p>
+  <header class="site-head">
+    <div>
+      <h1>Elle's Thesis Journal</h1>
+      <p>Logging my progress on this page.</p>
+    </div>
+    <div class="finder">
+      <input id="search" type="search" placeholder="Search" aria-label="Search entries">
+      <div id="tags"></div>
+    </div>
   </header>
 
-  <div class="tools">
-    <input id="search" type="search" placeholder="Search" aria-label="Search entries">
-    <div id="tags"></div>
-  </div>
-
   <main id="feed"></main>
-
-  <footer>
-    <span id="count"></span>
-    <span>Thesis journal</span>
-  </footer>
 </div>
 
 <div id="zoom" hidden><img alt=""></div>
@@ -109,8 +41,9 @@ function readEntriesGlobal() {
 
   var ENTRIES = [];
   var $ = function (id) { return document.getElementById(id); };
-  var feed = $("feed"), tagsEl = $("tags"), search = $("search"), count = $("count");
+  var feed = $("feed"), tagsEl = $("tags"), search = $("search");
   var activeTag = null;
+  var SHOW_MONTHS = false;   // set to true to bring back the "October 2026" headings
 
   /* ---------- helpers ---------- */
   function esc(s) {
@@ -175,6 +108,21 @@ function readEntriesGlobal() {
   }
 
   /* ---------- feed ---------- */
+  // Photos keep their own shape: one photo is shown full width, several sit in two columns.
+  // Videos always get the full width, after the photos.
+  function mediaHTML(items) {
+    var isVid = function (im) { return /\.(mp4|m4v|mov|webm|ogv)$/i.test(im.src); };
+    var cap = function (im) { return im.caption ? "<figcaption>" + esc(im.caption) + "</figcaption>" : ""; };
+    var photos = items.filter(function (im) { return !isVid(im); });
+    var videos = items.filter(isVid);
+    return (photos.length ? '<div class="pics' + (photos.length === 1 ? " one" : "") + '">' + photos.map(function (im) {
+        return '<figure><img src="' + esc(im.src) + '" alt="' + esc(im.caption || "") + '" loading="lazy">' + cap(im) + "</figure>";
+      }).join("") + "</div>" : "") +
+      (videos.length ? '<div class="vids">' + videos.map(function (im) {
+        return '<figure><video src="' + esc(im.src) + '#t=0.1" controls playsinline preload="metadata"></video>' + cap(im) + "</figure>";
+      }).join("") + "</div>" : "");
+  }
+
   function entryHTML(e) {
     var pics = (e.images || []).map(function (im) { return typeof im === "string" ? { src: im } : (im || {}); })
       .filter(function (im) { return im.src; });
@@ -184,25 +132,29 @@ function readEntriesGlobal() {
         (tags.length ? " &middot; " + tags.map(esc).join(", ") : "") + "</div>" +
       (e.title ? "<h2>" + esc(e.title) + "</h2>" : "") +
       '<div class="body">' + md(e.body) + "</div>" +
-      (pics.length ? '<div class="pics">' + pics.map(function (im) {
-        return '<figure><img src="' + esc(im.src) + '" alt="' + esc(im.caption || "") + '" loading="lazy">' +
-          (im.caption ? "<figcaption>" + esc(im.caption) + "</figcaption>" : "") + "</figure>";
-      }).join("") + "</div>" : "") +
+      mediaHTML(pics) +
     "</article>";
   }
 
   function render() {
     var q = search.value.trim().toLowerCase();
 
-    var counts = {};
+    // Tags match regardless of capitals ("Reading" = "reading"),
+    // but the button shows the tag the way you typed it.
+    var counts = {}, label = {};
     ENTRIES.forEach(function (e) {
-      (e.tags || []).forEach(function (t) { t = String(t).toLowerCase(); counts[t] = (counts[t] || 0) + 1; });
+      (e.tags || []).forEach(function (t) {
+        var key = String(t).trim().toLowerCase();
+        if (!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+        if (!label[key]) label[key] = String(t).trim();
+      });
     });
     var names = Object.keys(counts).sort();
     tagsEl.innerHTML = names.length
-      ? '<button data-tag="" class="' + (activeTag ? "" : "on") + '">all</button>' +
+      ? '<button data-tag="" class="' + (activeTag ? "" : "on") + '">All</button>' +
         names.map(function (t) {
-          return ' &middot; <button data-tag="' + esc(t) + '" class="' + (t === activeTag ? "on" : "") + '">' + esc(t) + "</button>";
+          return '<button data-tag="' + esc(t) + '" class="' + (t === activeTag ? "on" : "") + '">' + esc(label[t]) + "</button>";
         }).join("")
       : "";
 
@@ -218,12 +170,18 @@ function readEntriesGlobal() {
       var html = "", last = null;
       list.forEach(function (e) {
         var mo = month(e.date);
-        if (mo !== last) { html += '<h3 class="month">' + esc(mo) + "</h3>"; last = mo; }
+        if (SHOW_MONTHS && mo !== last) { html += '<h3 class="month">' + esc(mo) + "</h3>"; last = mo; }
         html += entryHTML(e);
       });
       feed.innerHTML = html;
+      // Tell each photo's frame its shape so rows line up without cropping.
+      feed.querySelectorAll(".pics img").forEach(function (img) {
+        function setShape() {
+          if (img.naturalWidth) img.parentNode.style.setProperty("--r", (img.naturalWidth / img.naturalHeight).toFixed(4));
+        }
+        if (img.complete) setShape(); else img.addEventListener("load", setShape);
+      });
     }
-    count.textContent = ENTRIES.length + (ENTRIES.length === 1 ? " entry" : " entries");
   }
 
   search.addEventListener("input", render);

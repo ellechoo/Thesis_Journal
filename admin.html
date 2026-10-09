@@ -5,20 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Journal Editor</title>
 <!-- Keep this file on your own computer. Don't upload it to the repo. -->
+
+<!-- The editor borrows its look from your live site: once you're connected it
+     loads the site's style.css, so colors and fonts always match. The values
+     below are only a fallback for when you're offline or not connected yet. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
 <style>
   :root{
-    --paper:#fbfaf7; --ink:#222; --muted:#7a766f; --rule:#dedad2;
-    --link:#8a3b12; --field:#fff; --bad:#a4441f; --soft:#f1eee8;
+    --paper:#0f1e3d; --ink:#fff; --muted:#a7b4cc; --rule:#2a3c63; --link:#8cc2ff;
+    --font:"Inter", system-ui, sans-serif;
+    color-scheme: dark;
   }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --paper:#1a1918; --ink:#e6e2da; --muted:#948e84; --rule:#35322e;
-      --link:#e0a27a; --field:#222120; --bad:#ffb894; --soft:#252321;
-    }
+  /* Editor-only colors, mixed from the site's colors so they always fit */
+  :root{
+    --field: color-mix(in srgb, var(--ink) 6%, var(--paper));
+    --soft:  color-mix(in srgb, var(--ink) 10%, var(--paper));
+    --bad:   color-mix(in srgb, #ff6a4d 75%, var(--ink));
   }
   *{box-sizing:border-box}
   [hidden]{display:none !important}
-  body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 Charter,"Iowan Old Style",Georgia,serif}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.6}
   .page{max-width:720px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
   a{color:var(--link)}
   small{font-size:.82rem;color:var(--muted)}
@@ -57,7 +65,10 @@
   .thumbs{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1rem}
   .thumb{position:relative;width:96px}
   .thumb img{width:96px;height:72px;object-fit:cover;display:block;background:var(--soft)}
-  .thumb.gone img{opacity:.25}
+  .thumb.gone img,.thumb.gone .vid{opacity:.25}
+  .thumb video{width:96px;height:72px;object-fit:cover;display:block;background:#000}
+  .thumb .vid{width:96px;height:72px;display:flex;align-items:center;justify-content:center;
+    background:var(--soft);color:var(--muted);font-size:.75rem;text-align:center;padding:.3rem;overflow:hidden;word-break:break-all}
   .thumb button{font-size:.75rem;margin-top:.15rem}
 
   #list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
@@ -121,12 +132,12 @@
     </div>
 
     <div id="eOldWrap" hidden>
-      <label>Photos on this entry</label>
+      <label>Photos &amp; videos on this entry</label>
       <div class="thumbs" id="eOld"></div>
     </div>
 
-    <label for="ePics" id="ePicsLabel">Photos <small>(optional)</small></label>
-    <input id="ePics" type="file" accept="image/*" multiple>
+    <label for="ePics" id="ePicsLabel">Photos &amp; videos <small>(optional — videos up to 50 MB)</small></label>
+    <input id="ePics" type="file" accept="image/*,video/*" multiple>
     <div class="thumbs" id="eNew"></div>
 
     <div class="actions">
@@ -322,15 +333,32 @@
     var ext = jpg ? "jpg" : ((String(file.name).match(/\.([a-z0-9]+)$/i) || [0, "jpg"])[1].toLowerCase());
     return date + "-" + base + "." + ext;
   }
+  var VIDEO_LIMIT_MB = 50;  // GitHub struggles with bigger files
+  function isVideoFile(f) { return /^video\//.test(f.type) || /\.(mp4|m4v|mov|webm)$/i.test(f.name); }
+  function isVideoPath(p) { return /\.(mp4|m4v|mov|webm|ogv)$/i.test(String(p)); }
+
   async function uploadPhotos(files, date, progress) {
+    // Check sizes first so nothing half-uploads.
+    files.forEach(function (f) {
+      if (isVideoFile(f) && f.size > VIDEO_LIMIT_MB * 1024 * 1024) {
+        throw new Error("“" + f.name + "” is " + Math.round(f.size / 1048576) + " MB. Videos need to be under " +
+          VIDEO_LIMIT_MB + " MB — try a shorter clip or export it at a smaller size.");
+      }
+    });
     var paths = [];
     for (var i = 0; i < files.length; i++) {
-      progress("Uploading photo " + (i + 1) + " of " + files.length + "…");
-      var p = await preparePhoto(files[i]);
+      var video = isVideoFile(files[i]);
+      progress(files.length > 1
+        ? "Uploading file " + (i + 1) + " of " + files.length + (video ? " (videos can take a minute)…" : "…")
+        : (video ? "Uploading video — this can take a minute…" : "Uploading photo…"));
+      var p = video
+        ? await files[i].arrayBuffer().then(function (b) { return { bytes: new Uint8Array(b), jpg: false }; })
+        : await preparePhoto(files[i]);
+      var folder = video ? "videos/" : "images/";
       var name = photoName(date, files[i], p.jpg);
-      if (await getFile("images/" + name)) name = name.replace(/(\.[a-z0-9]+)$/, "-" + Date.now().toString(36) + "$1");
-      await putFile("images/" + name, bytesToB64(p.bytes), "Add photo " + name);
-      paths.push("images/" + name);
+      if (await getFile(folder + name)) name = name.replace(/(\.[a-z0-9]+)$/, "-" + Date.now().toString(36) + "$1");
+      await putFile(folder + name, bytesToB64(p.bytes), (video ? "Add video " : "Add photo ") + name);
+      paths.push(folder + name);
     }
     return paths;
   }
@@ -372,7 +400,28 @@
     say(cNote, "Disconnected. The token has been removed from this computer.");
   });
 
+  // Pull in the live site's style.css so the editor looks like the site.
+  function useSiteStyle() {
+    if (!cfg || !cfg.site) return;
+    var old = document.getElementById("siteStyle");
+    if (old) old.remove();
+    var link = document.createElement("link");
+    link.id = "siteStyle";
+    link.rel = "stylesheet";
+    link.href = cfg.site.replace(/\/?$/, "/") + "style.css?v=" + Date.now();
+    link.onload = matchControlsToBackground;
+    document.head.appendChild(link);  // loads last, so the site's colors and fonts win
+  }
+  // Date pickers and scrollbars follow the background: light controls on light sites, dark on dark.
+  function matchControlsToBackground() {
+    var m = getComputedStyle(document.body).backgroundColor.match(/\d+(\.\d+)?/g);
+    if (!m) return;
+    var lum = (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255;
+    document.documentElement.style.colorScheme = lum < 0.5 ? "dark" : "light";
+  }
+
   function showWhere() {
+    useSiteStyle();
     $("where").innerHTML = '<a href="' + esc(cfg.site) + '" target="_blank" rel="noopener">View site</a> · ' +
       esc(cfg.repo) + ' · <button class="linkish" id="settings">settings</button>';
     $("settings").addEventListener("click", showConnect);
@@ -390,7 +439,10 @@
 
   ePics.addEventListener("change", function () {
     $("eNew").innerHTML = Array.prototype.map.call(ePics.files, function (f) {
-      return '<div class="thumb"><img src="' + URL.createObjectURL(f) + '" alt=""></div>';
+      var url = URL.createObjectURL(f);
+      return '<div class="thumb">' + (isVideoFile(f)
+        ? '<video src="' + url + '#t=0.1" muted playsinline preload="metadata"></video>'
+        : '<img src="' + url + '" alt="">') + "</div>";
     }).join("");
   });
 
@@ -403,7 +455,7 @@
     eDate.value = (d && d.date) || today();
     clearPicker();
     $("eHead").textContent = "New entry";
-    $("ePicsLabel").innerHTML = "Photos <small>(optional)</small>";
+    $("ePicsLabel").innerHTML = "Photos &amp; videos <small>(optional — videos up to 50 MB)</small>";
     $("eOldWrap").hidden = true;
     $("eCancel").hidden = true;
     eSave.textContent = "Publish";
@@ -419,7 +471,7 @@
     keptImages = (e.images || []).map(function (im) { return { im: im, keep: true }; });
     clearPicker();
     $("eHead").textContent = "Editing entry";
-    $("ePicsLabel").innerHTML = "Add more photos <small>(optional)</small>";
+    $("ePicsLabel").innerHTML = "Add more photos or videos <small>(optional)</small>";
     drawOldPhotos();
     $("eCancel").hidden = false;
     eSave.textContent = "Save changes";
@@ -434,7 +486,10 @@
     wrap.hidden = !keptImages.length;
     box.innerHTML = keptImages.map(function (k, i) {
       var src = typeof k.im === "string" ? k.im : k.im.src;
-      return '<div class="thumb' + (k.keep ? "" : " gone") + '"><img src="' + esc(rawUrl(src)) + '" alt="">' +
+      var media = isVideoPath(src)
+        ? '<div class="vid">▶ ' + esc(src.split("/").pop()) + "</div>"
+        : '<img src="' + esc(rawUrl(src)) + '" alt="">';
+      return '<div class="thumb' + (k.keep ? "" : " gone") + '">' + media +
         '<button class="linkish' + (k.keep ? " danger" : "") + '" data-i="' + i + '">' + (k.keep ? "remove" : "undo") + "</button></div>";
     }).join("");
   }
