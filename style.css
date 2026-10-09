@@ -181,7 +181,7 @@ small,
 
 /* ---------- Entries ---------- */
 article {
-  margin-bottom: 2.5rem;   /* space between entries */
+  margin-bottom: 3.5rem;   /* space between entries */
 }
 
 /* entry title */
@@ -263,35 +263,26 @@ article h2 {
 }
 
 /* Photos under an entry, shown uncropped at their original shape.
-   Photos share each row in proportion to their shape and fill the width,
-   like a photo album. Change the two heights to make photos bigger or smaller. */
-:root {
-  --photo-height: 180px;        /* starting height of a row of photos */
-  --photo-max-height: 260px;    /* a photo in a row never gets taller than this */
-  --single-photo-height: 320px; /* tallest a lone photo can be */
-}
-
+   Photos are packed into rows that fill the full width, like a photo album:
+   slides and wide photos pair up, portrait pages sit three or four across.
+   The sizes below steer the layout (index.html does the measuring). */
 .pics {
+  --photo-height: 220px;          /* the row height the layout aims for */
+  --photo-max-height: 280px;      /* rows never get taller than this */
+  --single-photo-height: 320px;   /* tallest a lone photo can be */
   display: flex;
   flex-wrap: wrap;
-  gap: .5rem;
+  gap: 8px;                       /* space between photos */
   margin-top: .8rem;
 }
 
 .pics figure {
-  --r: 1;   /* the photo's width ÷ height, filled in once it loads */
   margin: 0;
-  flex-grow: var(--r);
-  flex-shrink: 1;
-  flex-basis: calc(var(--r) * var(--photo-height));
-  max-width: min(100%, calc(var(--r) * var(--photo-max-height)));
-}
-
-.pics.one figure {
-  max-width: min(100%, calc(var(--r) * var(--single-photo-height)));
+  flex: none;
 }
 
 .pics img {
+  display: block;
   width: 100%;
   height: auto;
 }

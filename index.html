@@ -123,6 +123,51 @@ function readEntriesGlobal() {
       }).join("") + "</div>" : "");
   }
 
+  /* ---------- photo rows ----------
+     Packs photos into rows that fill the column width without cropping.
+     Each row gets one height; photos keep their own shape within it. */
+  function cssPx(el, name, fallback) {
+    var v = parseFloat(getComputedStyle(el).getPropertyValue(name));
+    return isNaN(v) ? fallback : v;
+  }
+  function layoutPics(box) {
+    var W = box.clientWidth;
+    if (!W) return;
+    var target = cssPx(box, "--photo-height", 220);
+    var maxH   = cssPx(box, "--photo-max-height", 280);
+    var single = cssPx(box, "--single-photo-height", 320);
+    var gap    = parseFloat(getComputedStyle(box).columnGap) || 8;
+    var figs = Array.prototype.slice.call(box.children);
+    var shapes = figs.map(function (f) {
+      var img = f.querySelector("img");
+      return img && img.naturalWidth ? img.naturalWidth / img.naturalHeight : 4 / 3;  // guess until loaded
+    });
+    function size(f, r, h) { f.style.width = Math.floor(r * h) + "px"; }
+
+    if (figs.length === 1) {   // a lone photo: as wide as fits, but no taller than the single limit
+      size(figs[0], shapes[0], Math.min(single, W / shapes[0]));
+      return;
+    }
+    var row = [], sum = 0, lastH = null;
+    function rowHeight(n, s) { return (W - gap * (n - 1)) / s - 0.5; }
+    function closeRow(h) { row.forEach(function (i) { size(figs[i], shapes[i], h); }); row = []; sum = 0; lastH = h; }
+    shapes.forEach(function (r, i) {
+      if (row.length) {
+        var hNow  = rowHeight(row.length, sum);          // finish the row here
+        var hNext = rowHeight(row.length + 1, sum + r);  // or squeeze this photo in too
+        if (hNow <= maxH && Math.abs(hNow - target) < Math.abs(hNext - target)) closeRow(hNow);
+      }
+      row.push(i); sum += r;
+    });
+    // The last row isn't stretched to fill the width: it matches the row above (or the target height).
+    if (row.length) closeRow(Math.min(lastH || target, rowHeight(row.length, sum)));
+  }
+  var relayoutTimer;
+  window.addEventListener("resize", function () {
+    clearTimeout(relayoutTimer);
+    relayoutTimer = setTimeout(function () { feed.querySelectorAll(".pics").forEach(layoutPics); }, 100);
+  });
+
   function keepLastWordsTogether(el) {
     var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), node, last = null;
     while ((node = walker.nextNode())) if (/\S\s+\S/.test(node.nodeValue)) last = node;
@@ -185,12 +230,12 @@ function readEntriesGlobal() {
       if (!(window.CSS && CSS.supports && CSS.supports("text-wrap", "pretty"))) {
         feed.querySelectorAll(".body p, .body li, .body blockquote").forEach(keepLastWordsTogether);
       }
-      // Tell each photo's frame its shape so rows line up without cropping.
-      feed.querySelectorAll(".pics img").forEach(function (img) {
-        function setShape() {
-          if (img.naturalWidth) img.parentNode.style.setProperty("--r", (img.naturalWidth / img.naturalHeight).toFixed(4));
-        }
-        if (img.complete) setShape(); else img.addEventListener("load", setShape);
+      // Lay out each photo group, and again as photos finish loading (that's when their shapes are known).
+      feed.querySelectorAll(".pics").forEach(function (box) {
+        layoutPics(box);
+        box.querySelectorAll("img").forEach(function (img) {
+          if (!img.complete) img.addEventListener("load", function () { layoutPics(box); });
+        });
       });
     }
   }
