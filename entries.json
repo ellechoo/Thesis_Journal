@@ -1,5 +1,21 @@
 [
   {
+    "id": "mw2wpk6d5m7l",
+    "date": "2026-10-23",
+    "title": "Voiceprint Development",
+    "tags": [
+      "prototype1"
+    ],
+    "body": "Accent and Note/Pitch are very important so I focused on breaking those down first, then adding in other elements later. The main color of a person's core (the inner sphere) is decided by their average Note. Their highest and lowest pitch shade the top and bottom of their core. 5 groups of accents, 16 total accents. 16 unique shell shapes in 5 families. Americas: Variations of geodesic spheres. British Isles: Variations of donut rings. Asia: Variations of flower inspired spheres. Oceania: Variations of two wings wrapping around. Africa & South Atlantic: Variations of spirals. How I came up with and assigned these looks for different accents varies from my personal interpretation to random (many are pretty random due to time constraints).",
+    "images": [
+      "images/2026-10-23-20261104_195131.jpg",
+      "images/2026-10-23-screenshot-2026-10-25-at-100518-pm.jpg",
+      "images/2026-10-23-screenshot-2026-10-25-at-100503-pm.jpg",
+      "images/2026-10-23-screenshot-2026-10-25-at-100525-pm.jpg",
+      "images/2026-10-23-screenshot-2026-10-25-at-100511-pm.jpg"
+    ]
+  },
+  {
     "id": "mw2w0h58hfdd",
     "date": "2026-10-18",
     "title": "3js Experiments",
