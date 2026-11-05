@@ -1,5 +1,22 @@
 [
   {
+    "id": "mw2vk992cc6o",
+    "date": "2026-10-14",
+    "title": "Starting Prototype 1",
+    "tags": [
+      "prototype1"
+    ],
+    "body": "This week focused on finding the correct tools and APIs to use. Then, after understanding which elements of a voice I can measure, I needed to figure out how to visualize it. Originally, I wanted the final portrait for each person to be abstract and unique. I gave every single part of the voice I was turning into data similar visual weight. I was also using the visualization of the person speaking the entire sentence, showing changes over time. The result was rather muddy looking and unfocused- especially when looked at in a group. Since I spent most of my time making sure my site was functional, not too much thought was put into the visual elements at this time.",
+    "images": [
+      "images/2026-10-14-20261104_194950.jpg",
+      "images/2026-10-14-20261104_195015.jpg",
+      "images/2026-10-14-screenshot-2026-10-15-at-91232-pm.jpg",
+      "images/2026-10-14-screenshot-2026-10-15-at-92047-pm.png",
+      "images/2026-10-14-screenshot-2026-10-15-at-95752-pm.png",
+      "images/2026-10-14-screenshot-2026-10-21-at-52407-pm.jpg"
+    ]
+  },
+  {
     "id": "mv0dncisb01a",
     "date": "2026-10-02",
     "title": "Graphique Strategies Workshop",
