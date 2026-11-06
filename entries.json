@@ -299,11 +299,11 @@
       "images/2026-09-18-20261008_231631.jpg",
       {
         "src": "images/2026-09-18-screenshot-2026-09-17-at-35806-pm.jpg",
-        "caption": "Default"
+        "caption": "Uniform"
       },
       {
         "src": "images/2026-09-18-screenshot-2026-09-17-at-34558-pm.jpg",
-        "caption": "Continent Lines"
+        "caption": "Average Color"
       },
       "videos/2026-09-18-256demo.mov"
     ],
@@ -322,11 +322,11 @@
         "images": [
           {
             "src": "images/2026-09-18-screenshot-2026-09-17-at-35806-pm.jpg",
-            "caption": "Default"
+            "caption": "Uniform"
           },
           {
             "src": "images/2026-09-18-screenshot-2026-09-17-at-34558-pm.jpg",
-            "caption": "Continent Lines"
+            "caption": "Average Color"
           }
         ]
       },
