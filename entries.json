@@ -37,6 +37,48 @@
       "images/2026-10-30-14-archive-filter.jpg",
       "images/2026-10-30-15-archive-filtered.jpg",
       "images/2026-10-30-16-archive-globe.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 3,
+        "images": [
+          "images/2026-10-30-screenshot-2026-11-03-at-111141-pm-copy.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111528-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111613-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111650-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111728-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111747-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111659-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111431-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111457-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111909-pm.jpg",
+          "images/2026-10-30-screenshot-2026-11-03-at-111954-pm.jpg"
+        ]
+      },
+      {
+        "layout": "phones",
+        "images": [
+          "images/2026-10-30-01-join.jpg",
+          "images/2026-10-30-02-record.jpg",
+          "images/2026-10-30-03-recording.jpg",
+          "images/2026-10-30-04-voiceprint.jpg",
+          "images/2026-10-30-05-voiceprint-accent.jpg",
+          "images/2026-10-30-06-voiceprint-rate.jpg",
+          "images/2026-10-30-07-voiceprint-pauses.jpg",
+          "images/2026-10-30-045-voiceprint-points-hidden.jpg",
+          "images/2026-10-30-065-download-id-card.jpg",
+          "images/2026-10-30-08-measurements.jpg",
+          "images/2026-10-30-09-accent.jpg",
+          "images/2026-10-30-10-timbre.jpg",
+          "images/2026-10-30-11-rhythm.jpg",
+          "images/2026-10-30-12-vowels.jpg",
+          "images/2026-10-30-13-archive.jpg",
+          "images/2026-10-30-14-archive-filter.jpg",
+          "images/2026-10-30-15-archive-filtered.jpg",
+          "images/2026-10-30-16-archive-globe.jpg"
+        ]
+      }
     ]
   },
   {
