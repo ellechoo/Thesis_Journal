@@ -201,13 +201,15 @@
   ];
   var HINTS = {
     auto: "Photos packed into even rows.",
-    grid: "Equal columns. Photos keep their shape.",
+    grid: "Equal columns. Photos are cropped to one shape so they line up — clicking still shows the whole photo.",
     feature: "First photo big, the rest small beside it.",
     phones: "Tall phone screens side by side.",
     full: "One photo per row, full width.",
     compare: "Two side by side. Add a caption under each."
   };
-  function newGroup(layout) { return { layout: layout || "auto", cols: 3, caption: "" }; }
+  var SHAPES = [["auto", "Shape: auto"], ["1/1", "Square"], ["4/3", "4:3"], ["16/9", "16:9"], ["3/4", "3:4 tall"],
+    ["none", "Original (no crop)"]];
+  function newGroup(layout) { return { layout: layout || "auto", cols: 3, shape: "auto", caption: "" }; }
   function lastGroup() { if (!groups.length) groups.push(newGroup()); return groups[groups.length - 1]; }
   var busy = false;
 
@@ -636,6 +638,10 @@
           (g.layout === "grid"
             ? '<select data-cols="' + gi + '" aria-label="Columns">' + [2, 3, 4, 5, 6].map(function (n) {
                 return '<option value="' + n + '"' + (n === g.cols ? " selected" : "") + ">" + n + " columns</option>";
+              }).join("") + "</select>" +
+              '<select data-shape="' + gi + '" aria-label="Photo shape" title="Photos are cropped to this shape in the grid. Clicking one on the site still shows the whole photo.">' +
+              SHAPES.map(function (sh) {
+                return '<option value="' + sh[0] + '"' + (sh[0] === g.shape ? " selected" : "") + ">" + sh[1] + "</option>";
               }).join("") + "</select>"
             : "") +
           '<input class="eg-cap" data-gcap="' + gi + '" type="text" placeholder="Group caption (optional)" value="' + esc(g.caption) + '">' +
@@ -708,6 +714,7 @@
     var t = ev.target;
     if (t.dataset.layout !== undefined) { groups[+t.dataset.layout].layout = t.value; drawMedia(); }
     else if (t.dataset.cols !== undefined) { groups[+t.dataset.cols].cols = +t.value; }
+    else if (t.dataset.shape !== undefined) { groups[+t.dataset.shape].shape = t.value; }
   });
   // Captions are saved as you type (no redraw, so the cursor stays put).
   $("eMedia").addEventListener("input", function (ev) {
@@ -763,6 +770,7 @@
       var g = newGroup(LAYOUTS.some(function (l) { return l[0] === gd.layout; }) ? gd.layout : "auto");
       g.cols = Math.min(6, Math.max(2, +gd.cols || 3));
       g.caption = gd.caption || "";
+      g.shape = SHAPES.some(function (sh) { return sh[0] === gd.shape; }) ? gd.shape : "auto";
       groups.push(g);
       (gd.images || []).forEach(function (im) {
         media.push({ old: im, grp: g, caption: (im && im.caption) || "" });
@@ -839,6 +847,7 @@
       var outGroups = groups.map(function (g) {
         var out = { layout: g.layout };
         if (g.layout === "grid") out.cols = g.cols;
+        if (g.layout === "grid" && g.shape !== "auto") out.shape = g.shape;
         if (g.caption.trim()) out.caption = g.caption.trim();
         out.images = [];
         media.forEach(function (m) { if (m.grp === g) out.images = out.images.concat(m.saved); });

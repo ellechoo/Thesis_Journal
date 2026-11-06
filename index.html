@@ -135,6 +135,8 @@ function readEntriesGlobal() {
        full     one photo per row, full width
        compare  two side by side, with captions                       */
   var LAYOUTS = ["auto", "grid", "feature", "phones", "full", "compare"];
+  // Grid cell shapes. "auto" = the most common shape among the group's photos; "none" = no cropping.
+  var SHAPES = ["auto", "1/1", "4/3", "16/9", "3/4", "none"];
   function normImages(list) {
     return (list || []).map(function (im) { return typeof im === "string" ? { src: im } : (im || {}); })
       .filter(function (im) { return im.src; });
@@ -144,6 +146,7 @@ function readEntriesGlobal() {
     return gs.map(function (g) {
       return { layout: LAYOUTS.indexOf(g.layout) === -1 ? "auto" : g.layout,
                cols: Math.min(6, Math.max(2, +g.cols || 3)),
+               shape: SHAPES.indexOf(g.shape) === -1 ? "auto" : g.shape,
                caption: g.caption || "", images: normImages(g.images) };
     }).filter(function (g) { return g.images.length; });
   }
@@ -159,7 +162,8 @@ function readEntriesGlobal() {
     if (g.layout === "auto" || g.layout === "phones") {
       inner = mediaHTML(g.images, g.layout === "phones" ? "phones" : "");
     } else if (g.layout === "grid") {
-      inner = '<div class="grid" style="--cols:' + g.cols + '">' + figs(g.images) + "</div>";
+      inner = '<div class="grid" data-shape="' + g.shape + '" style="--cols:' + g.cols +
+        (g.shape !== "auto" && g.shape !== "none" ? "; --cell-ratio:" + g.shape : "") + '">' + figs(g.images) + "</div>";
     } else if (g.layout === "feature") {
       inner = '<div class="feature' + (g.images.length === 1 ? " one" : "") + '">' +
         '<div class="hero">' + figHTML(g.images[0]) + "</div>" +
@@ -171,6 +175,19 @@ function readEntriesGlobal() {
     }
     return '<div class="group g-' + g.layout + '">' +
       (g.caption ? '<div class="group-cap">' + esc(g.caption) + "</div>" : "") + inner + "</div>";
+  }
+
+  // An "auto" grid crops every photo to the shape most of its photos already have,
+  // so the cells line up while cropping as little as possible. (Clicking still shows the full photo.)
+  function shapeGrid(box) {
+    var rs = [];
+    box.querySelectorAll("img").forEach(function (img) {
+      if (img.naturalWidth) rs.push(Math.round(img.naturalWidth / img.naturalHeight * 20) / 20);
+    });
+    if (!rs.length) return;
+    var count = {}, best = rs[0];
+    rs.forEach(function (r) { count[r] = (count[r] || 0) + 1; if (count[r] > count[best]) best = r; });
+    box.style.setProperty("--cell-ratio", best);
   }
 
   /* ---------- photo rows ----------
@@ -330,6 +347,12 @@ function readEntriesGlobal() {
         layoutPics(box);
         box.querySelectorAll("img").forEach(function (img) {
           if (!img.complete) img.addEventListener("load", function () { layoutPics(box); });
+        });
+      });
+      feed.querySelectorAll('.grid[data-shape="auto"]').forEach(function (box) {
+        shapeGrid(box);
+        box.querySelectorAll("img").forEach(function (img) {
+          if (!img.complete) img.addEventListener("load", function () { shapeGrid(box); });
         });
       });
       pinText();

@@ -526,6 +526,15 @@ article h2 {
   align-items: start;
 }
 
+/* Grid cells all get one shape (set per group in the editor). The photo is cropped
+   to fill its cell, centered; clicking it still opens the whole, uncropped photo. */
+.grid:not([data-shape="none"]) img,
+.grid:not([data-shape="none"]) video {
+  aspect-ratio: var(--cell-ratio, 4 / 3);
+  object-fit: cover;
+  object-position: center;
+}
+
 /* Feature: first photo big, the rest small beside it */
 .feature {
   display: grid;
