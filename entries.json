@@ -196,6 +196,19 @@
       "images/2026-08-28-elle-intro-page-3.jpg",
       "images/2026-08-28-elle-intro-page-4.jpg",
       "images/2026-08-28-elle-intro-page-5.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 5,
+        "images": [
+          "images/2026-08-28-elle-intro-page-1.jpg",
+          "images/2026-08-28-elle-intro-page-2.jpg",
+          "images/2026-08-28-elle-intro-page-3.jpg",
+          "images/2026-08-28-elle-intro-page-4.jpg",
+          "images/2026-08-28-elle-intro-page-5.jpg"
+        ]
+      }
     ]
   }
 ]
