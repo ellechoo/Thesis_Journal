@@ -85,6 +85,28 @@
       "images/2026-10-18-heart-wax.jpg",
       "images/2026-10-18-proto-2.jpg",
       "images/2026-10-18-proto-1.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-10-18-20261104_195054.jpg",
+          "images/2026-10-18-inspo5.jpg",
+          "images/2026-10-18-inspo3.jpg",
+          "images/2026-10-18-style-inspo.jpg"
+        ]
+      },
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-10-18-heart-ceramic.jpg",
+          "images/2026-10-18-heart-wax.jpg",
+          "images/2026-10-18-proto-2.jpg",
+          "images/2026-10-18-proto-1.jpg"
+        ]
+      }
     ]
   },
   {
