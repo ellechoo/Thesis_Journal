@@ -88,17 +88,6 @@ small,
   margin-top: .5rem;
 }
 
-/* On wide screens, pin them to the top-right corner of the page */
-@media (min-width: 1000px) {
-  .finder {
-    position: absolute;
-    top: 1.75rem;
-    right: 2rem;
-    width: 220px;
-    margin: 0;
-  }
-}
-
 /* On phones, put them under the title */
 @media (max-width: 560px) {
   .site-head {
@@ -319,4 +308,265 @@ article h2 {
 #zoom img {
   max-width: 100%;
   max-height: 100%;
+}
+
+
+/* ==========================================================
+   Wide layout (public page only — admin.html is unaffected)
+   Sidebar on the left with the entry list; each entry shows
+   its text on the left and its photos on the right.
+   ========================================================== */
+.journal {
+  max-width: 1760px;     /* how wide the whole page gets */
+  padding: 0 2rem;   /* bottom space lives on main, so the sidebar never slides up at the end */
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);   /* sidebar width | entries */
+  gap: 3.5rem;
+}
+
+/* Sidebar */
+.side {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 0 2rem;
+}
+
+.journal .site-head {
+  display: block;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.journal .site-head h1 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.journal .finder {
+  flex: none;
+  width: auto;
+  margin: 0 0 1.5rem;
+}
+
+/* The list of entries */
+#toc {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid var(--rule);
+  padding-top: .75rem;
+  scrollbar-width: thin;
+}
+
+#toc a {
+  display: block;
+  padding: .35rem 0 .35rem .75rem;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .85rem;
+  line-height: 1.35;
+}
+
+#toc a span {
+  display: block;
+  font-size: .72rem;
+  opacity: .75;
+}
+
+#toc a:hover {
+  color: var(--ink);
+}
+
+/* the entry you're currently reading */
+#toc a.on {
+  color: var(--ink);
+  border-left-color: var(--ink);
+}
+
+/* Entries */
+.journal main {
+  padding: 3rem 0 4rem;
+  min-width: 0;
+}
+
+.journal article {
+  scroll-margin-top: 2rem;   /* space above an entry when jumping to it */
+  padding-bottom: 3.5rem;
+  margin-bottom: 3.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.journal article:last-child {
+  border-bottom: 0;
+}
+
+.journal .pics {
+  margin-top: 0;
+}
+
+.journal .vids figure:first-child {
+  margin-top: 0;
+}
+
+/* Text left, photos right — only when there's room */
+@media (min-width: 1150px) {
+  .journal article.has-media {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);   /* text : photos */
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .journal .text.pin {
+    position: sticky;
+    top: 2rem;
+  }
+  /* smaller photo rows in the right column, so more fit across */
+  .journal .pics {
+    --photo-height: 125px;
+    --photo-max-height: 200px;
+    --single-photo-height: 420px;
+  }
+  /* entries with no photos keep a comfortable reading width */
+  .journal article.no-media .text {
+    max-width: 640px;
+  }
+}
+
+@media (max-width: 1149px) {
+  .journal .text { max-width: 640px; }
+  .journal .media { margin-top: 1rem; }
+}
+
+/* Tablets and phones: back to one column, sidebar becomes the header */
+@media (max-width: 860px) {
+  .journal {
+    display: block;
+    max-width: 640px;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+  .side {
+    position: static;
+    height: auto;
+    padding: 0;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 2.5rem;
+  }
+  #toc {
+    display: none;
+  }
+  .journal main {
+    padding-top: 0;
+  }
+}
+
+
+
+/* ==========================================================
+   Photo groups (layouts are picked per group in admin.html)
+   ========================================================== */
+.group + .group {
+  margin-top: 1.75rem;     /* space between groups */
+}
+
+/* the group's caption, shown above its photos */
+.group-cap {
+  font-size: .8rem;
+  color: var(--muted);
+  margin-bottom: .5rem;
+}
+
+.group figure {
+  margin: 0;
+}
+
+.group img,
+.group video {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: zoom-in;
+}
+
+.group video {
+  cursor: auto;
+  background: #000;
+}
+
+.group figcaption {
+  font-size: .8rem;
+  color: var(--muted);
+  margin-top: .35rem;
+  line-height: 1.4;
+}
+
+.group .pics {
+  margin-top: 0;
+}
+
+.group .vids figure {
+  margin: .5rem 0 0;
+}
+
+/* Phone strip: same packing as auto rows, but taller rows */
+.pics.phones,
+.journal .pics.phones {
+  --photo-height: 300px;
+  --photo-max-height: 380px;
+  --single-photo-height: 480px;
+}
+
+/* Grid: equal columns, photos keep their own shape */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+/* Feature: first photo big, the rest small beside it */
+.feature {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.feature.one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.feature .rest {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+/* Full width: one per row */
+.full {
+  display: grid;
+  gap: 12px;
+}
+
+/* Compare: two side by side, with captions */
+.compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 8px;
+  align-items: start;
+}
+
+/* Phones: grids go down to two columns, feature stacks */
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .feature {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .feature .rest {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }

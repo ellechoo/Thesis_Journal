@@ -11,19 +11,21 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="page">
+<div class="page journal">
 
-  <!-- Edit your title and subtitle here -->
-  <header class="site-head">
-    <div>
+  <!-- Sidebar: title, search, tags, and the list of entries -->
+  <aside class="side">
+    <!-- Edit your title and subtitle here -->
+    <header class="site-head">
       <h1>Elle's Thesis Journal</h1>
       <p>Logging my progress on this page.</p>
-    </div>
+    </header>
     <div class="finder">
       <input id="search" type="search" placeholder="Search" aria-label="Search entries">
       <div id="tags"></div>
     </div>
-  </header>
+    <nav id="toc" aria-label="Entries"></nav>
+  </aside>
 
   <main id="feed"></main>
 </div>
@@ -41,7 +43,7 @@ function readEntriesGlobal() {
 
   var ENTRIES = [];
   var $ = function (id) { return document.getElementById(id); };
-  var feed = $("feed"), tagsEl = $("tags"), search = $("search");
+  var feed = $("feed"), tagsEl = $("tags"), search = $("search"), toc = $("toc");
   var activeTag = null;
   var SHOW_MONTHS = false;   // set to true to bring back the "October 2026" headings
 
@@ -110,17 +112,65 @@ function readEntriesGlobal() {
   /* ---------- feed ---------- */
   // Photos keep their own shape: one photo is shown full width, several sit in two columns.
   // Videos always get the full width, after the photos.
-  function mediaHTML(items) {
+  function mediaHTML(items, extra) {
     var isVid = function (im) { return /\.(mp4|m4v|mov|webm|ogv)$/i.test(im.src); };
     var cap = function (im) { return im.caption ? "<figcaption>" + esc(im.caption) + "</figcaption>" : ""; };
     var photos = items.filter(function (im) { return !isVid(im); });
     var videos = items.filter(isVid);
-    return (photos.length ? '<div class="pics' + (photos.length === 1 ? " one" : "") + '">' + photos.map(function (im) {
+    return (photos.length ? '<div class="pics' + (extra ? " " + extra : "") + (photos.length === 1 ? " one" : "") + '">' + photos.map(function (im) {
         return '<figure><img src="' + esc(im.src) + '" alt="' + esc(im.caption || "") + '" loading="lazy">' + cap(im) + "</figure>";
       }).join("") + "</div>" : "") +
       (videos.length ? '<div class="vids">' + videos.map(function (im) {
         return '<figure><video src="' + esc(im.src) + '#t=0.1" controls playsinline preload="metadata"></video>' + cap(im) + "</figure>";
       }).join("") + "</div>" : "");
+  }
+
+  /* ---------- photo groups ----------
+     An entry's photos can be split into groups, each with its own layout
+     (set in admin.html). Older entries without groups show as one "auto" group.
+       auto     photos packed into even rows (the original look)
+       grid     equal columns (2, 3 or 4), photos keep their shape
+       feature  first photo big, the rest small beside it
+       phones   tall phone screens side by side at one height
+       full     one photo per row, full width
+       compare  two side by side, with captions                       */
+  var LAYOUTS = ["auto", "grid", "feature", "phones", "full", "compare"];
+  function normImages(list) {
+    return (list || []).map(function (im) { return typeof im === "string" ? { src: im } : (im || {}); })
+      .filter(function (im) { return im.src; });
+  }
+  function entryGroups(e) {
+    var gs = Array.isArray(e.groups) && e.groups.length ? e.groups : [{ layout: "auto", images: e.images }];
+    return gs.map(function (g) {
+      return { layout: LAYOUTS.indexOf(g.layout) === -1 ? "auto" : g.layout,
+               cols: Math.min(4, Math.max(2, +g.cols || 3)),
+               caption: g.caption || "", images: normImages(g.images) };
+    }).filter(function (g) { return g.images.length; });
+  }
+  function isVideo(im) { return /\.(mp4|m4v|mov|webm|ogv)$/i.test(im.src); }
+  function figHTML(im) {
+    var cap = im.caption ? "<figcaption>" + esc(im.caption) + "</figcaption>" : "";
+    return isVideo(im)
+      ? '<figure><video src="' + esc(im.src) + '#t=0.1" controls playsinline preload="metadata"></video>' + cap + "</figure>"
+      : '<figure><img src="' + esc(im.src) + '" alt="' + esc(im.caption || "") + '" loading="lazy">' + cap + "</figure>";
+  }
+  function groupHTML(g) {
+    var inner, figs = function (list) { return list.map(figHTML).join(""); };
+    if (g.layout === "auto" || g.layout === "phones") {
+      inner = mediaHTML(g.images, g.layout === "phones" ? "phones" : "");
+    } else if (g.layout === "grid") {
+      inner = '<div class="grid" style="--cols:' + g.cols + '">' + figs(g.images) + "</div>";
+    } else if (g.layout === "feature") {
+      inner = '<div class="feature' + (g.images.length === 1 ? " one" : "") + '">' +
+        '<div class="hero">' + figHTML(g.images[0]) + "</div>" +
+        (g.images.length > 1 ? '<div class="rest">' + figs(g.images.slice(1)) + "</div>" : "") + "</div>";
+    } else if (g.layout === "full") {
+      inner = '<div class="full">' + figs(g.images) + "</div>";
+    } else {
+      inner = '<div class="compare">' + figs(g.images) + "</div>";
+    }
+    return '<div class="group g-' + g.layout + '">' +
+      (g.caption ? '<div class="group-cap">' + esc(g.caption) + "</div>" : "") + inner + "</div>";
   }
 
   /* ---------- photo rows ----------
@@ -137,6 +187,9 @@ function readEntriesGlobal() {
     var maxH   = cssPx(box, "--photo-max-height", 280);
     var single = cssPx(box, "--single-photo-height", 320);
     var gap    = parseFloat(getComputedStyle(box).columnGap) || 8;
+    // A small set of photos (2–4) gets bigger rows, so it doesn't look lost.
+    var few = box.children.length <= 4;
+    if (few) { target = Math.max(target, 200); maxH = Math.max(maxH, 300); }
     var figs = Array.prototype.slice.call(box.children);
     var shapes = figs.map(function (f) {
       var img = f.querySelector("img");
@@ -160,12 +213,12 @@ function readEntriesGlobal() {
       row.push(i); sum += r;
     });
     // The last row isn't stretched to fill the width: it matches the row above (or the target height).
-    if (row.length) closeRow(Math.min(lastH || target, rowHeight(row.length, sum)));
+    if (row.length) closeRow(Math.min(lastH || (few ? maxH : target), rowHeight(row.length, sum)));
   }
   var relayoutTimer;
   window.addEventListener("resize", function () {
     clearTimeout(relayoutTimer);
-    relayoutTimer = setTimeout(function () { feed.querySelectorAll(".pics").forEach(layoutPics); }, 100);
+    relayoutTimer = setTimeout(function () { feed.querySelectorAll(".pics").forEach(layoutPics); pinText(); }, 100);
   });
 
   function keepLastWordsTogether(el) {
@@ -175,16 +228,56 @@ function readEntriesGlobal() {
   }
 
   function entryHTML(e) {
-    var pics = (e.images || []).map(function (im) { return typeof im === "string" ? { src: im } : (im || {}); })
-      .filter(function (im) { return im.src; });
     var tags = (e.tags || []).filter(Boolean);
-    return "<article>" +
-      '<div class="meta">' + esc(niceDate(e.date)) +
-        (tags.length ? " &middot; " + tags.map(esc).join(", ") : "") + "</div>" +
-      (e.title ? "<h2>" + esc(e.title) + "</h2>" : "") +
-      '<div class="body">' + md(e.body) + "</div>" +
-      mediaHTML(pics) +
+    var media = entryGroups(e).map(groupHTML).join("");
+    // Text on the left, photos and videos on the right (stacked on narrow screens).
+    return '<article id="' + esc(entryId(e)) + '" class="' + (media ? "has-media" : "no-media") + '">' +
+      '<div class="text">' +
+        '<div class="meta">' + esc(niceDate(e.date)) +
+          (tags.length ? " &middot; " + tags.map(esc).join(", ") : "") + "</div>" +
+        (e.title ? "<h2>" + esc(e.title) + "</h2>" : "") +
+        '<div class="body">' + md(e.body) + "</div>" +
+      "</div>" +
+      (media ? '<div class="media">' + media + "</div>" : "") +
     "</article>";
+  }
+
+  function entryId(e) { return "e-" + String(e.id || e.date || "").replace(/[^\w-]/g, ""); }
+  function shortDate(iso) {
+    var d = toDate(iso);
+    return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+  }
+
+  /* ---------- sidebar list of entries ---------- */
+  function tocHTML(list) {
+    return list.map(function (e) {
+      return '<a href="#' + esc(entryId(e)) + '"><span>' + esc(shortDate(e.date)) + "</span>" + esc(e.title || "Untitled") + "</a>";
+    }).join("");
+  }
+
+  // Highlight the entry you're currently reading in the sidebar.
+  var spy;
+  function watchEntries() {
+    if (spy) spy.disconnect();
+    if (!("IntersectionObserver" in window)) return;
+    spy = new IntersectionObserver(function (items) {
+      items.forEach(function (it) {
+        if (!it.isIntersecting) return;
+        toc.querySelectorAll("a").forEach(function (a) {
+          var on = a.getAttribute("href") === "#" + it.target.id;
+          a.classList.toggle("on", on);
+          if (on && a.scrollIntoView && toc.scrollHeight > toc.clientHeight) a.scrollIntoView({ block: "nearest" });
+        });
+      });
+    }, { rootMargin: "-30% 0px -65% 0px" });
+    feed.querySelectorAll("article").forEach(function (a) { spy.observe(a); });
+  }
+
+  // The text stays pinned while its photos scroll past, but only when the text fits on screen.
+  function pinText() {
+    feed.querySelectorAll("article.has-media .text").forEach(function (t) {
+      t.classList.toggle("pin", t.offsetHeight < window.innerHeight - 80);
+    });
   }
 
   function render() {
@@ -215,6 +308,8 @@ function readEntriesGlobal() {
       return [e.title, e.body, (e.tags || []).join(" "), e.date].join(" ").toLowerCase().indexOf(q) !== -1;
     }).sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
 
+    toc.innerHTML = tocHTML(list);
+
     if (!list.length) {
       feed.innerHTML = '<p class="empty">' + (ENTRIES.length ? "Nothing matches that." : "No entries yet.") + "</p>";
     } else {
@@ -237,6 +332,8 @@ function readEntriesGlobal() {
           if (!img.complete) img.addEventListener("load", function () { layoutPics(box); });
         });
       });
+      pinText();
+      watchEntries();
     }
   }
 
