@@ -24,8 +24,6 @@
       "images/2026-10-30-03-recording.jpg",
       "images/2026-10-30-04-voiceprint.jpg",
       "images/2026-10-30-05-voiceprint-accent.jpg",
-      "images/2026-10-30-06-voiceprint-rate.jpg",
-      "images/2026-10-30-07-voiceprint-pauses.jpg",
       "images/2026-10-30-045-voiceprint-points-hidden.jpg",
       "images/2026-10-30-065-download-id-card.jpg",
       "images/2026-10-30-08-measurements.jpg",
@@ -57,15 +55,14 @@
         ]
       },
       {
-        "layout": "phones",
+        "layout": "grid",
+        "cols": 3,
         "images": [
           "images/2026-10-30-01-join.jpg",
           "images/2026-10-30-02-record.jpg",
           "images/2026-10-30-03-recording.jpg",
           "images/2026-10-30-04-voiceprint.jpg",
           "images/2026-10-30-05-voiceprint-accent.jpg",
-          "images/2026-10-30-06-voiceprint-rate.jpg",
-          "images/2026-10-30-07-voiceprint-pauses.jpg",
           "images/2026-10-30-045-voiceprint-points-hidden.jpg",
           "images/2026-10-30-065-download-id-card.jpg",
           "images/2026-10-30-08-measurements.jpg",
