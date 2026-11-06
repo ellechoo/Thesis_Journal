@@ -55,8 +55,7 @@
         ]
       },
       {
-        "layout": "grid",
-        "cols": 3,
+        "layout": "phones",
         "images": [
           "images/2026-10-30-01-join.jpg",
           "images/2026-10-30-02-record.jpg",
