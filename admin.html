@@ -78,6 +78,25 @@
   .thumb .ctrl button{font:inherit;font-size:.85rem;line-height:1;background:none;border:0;padding:.15rem .3rem;
     color:var(--muted);cursor:pointer}
   .thumb .ctrl button:hover{color:var(--ink)}
+
+  /* Photo groups: each box is one group with its own layout on the site */
+  .eg{border:1px dashed var(--rule);border-radius:4px;padding:.6rem .6rem .2rem;margin:0 0 .8rem}
+  .eg.drop-into{border-color:var(--ink)}
+  .eg-head{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-bottom:.6rem}
+  .eg-head select,.eg-head input{width:auto;margin:0;padding:.25rem .4rem;font-size:.82rem}
+  .eg-head input.eg-cap{flex:1;min-width:8rem}
+  .eg-head .eg-btns{margin-left:auto;display:flex;gap:.1rem}
+  .eg-head .eg-btns button{font:inherit;font-size:.9rem;line-height:1;background:none;border:0;padding:.2rem .35rem;
+    color:var(--muted);cursor:pointer}
+  .eg-head .eg-btns button:hover{color:var(--ink)}
+  .eg-head .eg-btns button:disabled{opacity:.3;cursor:default}
+  .eg .thumbs{margin:0 0 .4rem;min-height:72px}
+  .eg-empty{font-size:.8rem;color:var(--muted);padding:1.4rem .4rem}
+  .eg-hint{font-size:.75rem;color:var(--muted);margin:-.2rem 0 .5rem}
+  .thumb input.cap{width:96px;margin:.2rem 0 0;padding:.15rem .3rem;font-size:.72rem}
+  .eg-add{font:inherit;font-size:.85rem;color:var(--muted);background:none;border:1px dashed var(--rule);
+    border-radius:4px;padding:.35rem .8rem;cursor:pointer;margin:0 .5rem 1rem 0}
+  .eg-add:hover{color:var(--ink);border-color:var(--muted)}
   .thumb .ctrl button:disabled{opacity:.25;cursor:default}
   .thumb .ctrl .x:hover{color:var(--bad)}
   .add-files{display:inline-block;font-size:.88rem;color:var(--muted);border:1px dashed var(--rule);
@@ -144,8 +163,8 @@
       </div>
     </div>
 
-    <label>Photos, videos &amp; PDFs <small>(drag or use the arrows to reorder · videos up to 50 MB)</small></label>
-    <div class="thumbs" id="eMedia"></div>
+    <label>Photos, videos &amp; PDFs <small>(drag or use the arrows to reorder · drag between groups · videos up to 50 MB)</small></label>
+    <div id="eMedia"></div>
     <label class="add-files">+ Add files
       <input id="ePics" type="file" accept="image/*,video/*,application/pdf,.pdf" multiple hidden>
     </label>
@@ -174,6 +193,22 @@
   var entries = [];
   var editingId = null;      // id of the entry being edited, or null for a new one
   var media = [];            // photos/videos on the entry, in display order: {old: path} or {file: File, url}
+                             // each also has .grp (the group it's in) and .caption
+  var groups = [];           // photo groups, in order: {layout, cols, caption}
+  var LAYOUTS = [
+    ["auto", "Auto rows"], ["grid", "Grid"], ["feature", "Feature"],
+    ["phones", "Phone strip"], ["full", "Full width"], ["compare", "Compare"]
+  ];
+  var HINTS = {
+    auto: "Photos packed into even rows.",
+    grid: "Equal columns. Photos keep their shape.",
+    feature: "First photo big, the rest small beside it.",
+    phones: "Tall phone screens side by side.",
+    full: "One photo per row, full width.",
+    compare: "Two side by side. Add a caption under each."
+  };
+  function newGroup(layout) { return { layout: layout || "auto", cols: 3, caption: "" }; }
+  function lastGroup() { if (!groups.length) groups.push(newGroup()); return groups[groups.length - 1]; }
   var busy = false;
 
   /* ---------- small helpers ---------- */
@@ -524,11 +559,11 @@
   ePics.addEventListener("change", function () {
     Array.prototype.forEach.call(ePics.files, function (f) {
       if (isPdfFile(f)) {
-        var slot = { reading: f.name };
+        var slot = { reading: f.name, grp: lastGroup() };
         media.push(slot);
         splitPdf(f, slot);
       } else {
-        media.push({ file: f, url: URL.createObjectURL(f) });
+        media.push({ file: f, url: URL.createObjectURL(f), grp: lastGroup() });
       }
     });
     ePics.value = "";
@@ -546,7 +581,7 @@
       if (at === -1) return;   // removed while it was being read
       var items = pages.map(function (bytes, k) {
         var page = new File([bytes], stem + "-page-" + (k + 1) + ".jpg", { type: "image/jpeg" });
-        return { file: page, url: URL.createObjectURL(page) };
+        return { file: page, url: URL.createObjectURL(page), grp: slot.grp };
       });
       media.splice.apply(media, [at, 1].concat(items));
     } catch (e) {
@@ -559,57 +594,136 @@
 
   function mediaPath(m) { return typeof m.old === "string" ? m.old : (m.old && m.old.src) || ""; }
 
-  function drawMedia() {
-    var box = $("eMedia");
-    box.innerHTML = media.map(function (m, i) {
-      var inner;
-      if (m.reading) {
-        return '<div class="thumb"><div class="vid">Reading PDF…<br>' + esc(m.reading) + "</div></div>";
-      }
-      if (m.file) {
-        inner = isPdfFile(m.file) ? '<div class="vid">PDF<br>' + esc(m.file.name) + "</div>"
-          : isVideoFile(m.file) ? '<video src="' + m.url + '#t=0.1" muted playsinline preload="metadata"></video>'
-          : '<img src="' + m.url + '" alt="">';
-      } else {
-        var src = mediaPath(m);
-        inner = isVideoPath(src) ? '<div class="vid">▶ ' + esc(src.split("/").pop()) + "</div>"
-          : '<img src="' + esc(rawUrl(src)) + '" alt="">';
-      }
-      return '<div class="thumb" draggable="true" data-i="' + i + '">' + inner +
-        '<span class="pos">' + (i + 1) + "</span>" +
-        '<div class="ctrl">' +
-          '<button data-move="-1" data-i="' + i + '" title="Move left"' + (i === 0 ? " disabled" : "") + ">‹</button>" +
-          '<button class="x" data-remove data-i="' + i + '" title="Remove">×</button>' +
-          '<button data-move="1" data-i="' + i + '" title="Move right"' + (i === media.length - 1 ? " disabled" : "") + ">›</button>" +
-        "</div></div>";
-    }).join("");
+  function thumbHTML(m, i, g) {
+    var inner;
+    if (m.reading) {
+      return '<div class="thumb"><div class="vid">Reading PDF…<br>' + esc(m.reading) + "</div></div>";
+    }
+    if (m.file) {
+      inner = isPdfFile(m.file) ? '<div class="vid">PDF<br>' + esc(m.file.name) + "</div>"
+        : isVideoFile(m.file) ? '<video src="' + m.url + '#t=0.1" muted playsinline preload="metadata"></video>'
+        : '<img src="' + m.url + '" alt="">';
+    } else {
+      var src = mediaPath(m);
+      inner = isVideoPath(src) ? '<div class="vid">▶ ' + esc(src.split("/").pop()) + "</div>"
+        : '<img src="' + esc(rawUrl(src)) + '" alt="">';
+    }
+    var mates = media.filter(function (x) { return x.grp === m.grp; });
+    var k = mates.indexOf(m);
+    return '<div class="thumb" draggable="true" data-i="' + i + '">' + inner +
+      '<span class="pos">' + (k + 1) + "</span>" +
+      (g.layout === "compare"
+        ? '<input class="cap" data-cap="' + i + '" type="text" placeholder="Caption" value="' + esc(m.caption || "") + '">'
+        : "") +
+      '<div class="ctrl">' +
+        '<button data-move="-1" data-i="' + i + '" title="Move left"' + (k === 0 ? " disabled" : "") + ">‹</button>" +
+        '<button class="x" data-remove data-i="' + i + '" title="Remove">×</button>' +
+        '<button data-move="1" data-i="' + i + '" title="Move right"' + (k === mates.length - 1 ? " disabled" : "") + ">›</button>" +
+      "</div></div>";
   }
 
-  function moveMedia(from, to) {
-    if (from === to || to < 0 || to >= media.length) return;
-    var m = media.splice(from, 1)[0];
-    media.splice(to, 0, m);
+  function drawMedia() {
+    lastGroup();
+    var box = $("eMedia");
+    var many = groups.length > 1;
+    box.innerHTML = groups.map(function (g, gi) {
+      var thumbs = media.map(function (m, i) { return m.grp === g ? thumbHTML(m, i, g) : ""; }).join("");
+      return '<div class="eg" data-g="' + gi + '">' +
+        '<div class="eg-head">' +
+          '<select data-layout="' + gi + '" aria-label="Layout">' + LAYOUTS.map(function (l) {
+            return '<option value="' + l[0] + '"' + (l[0] === g.layout ? " selected" : "") + ">" + l[1] + "</option>";
+          }).join("") + "</select>" +
+          (g.layout === "grid"
+            ? '<select data-cols="' + gi + '" aria-label="Columns">' + [2, 3, 4, 5, 6].map(function (n) {
+                return '<option value="' + n + '"' + (n === g.cols ? " selected" : "") + ">" + n + " columns</option>";
+              }).join("") + "</select>"
+            : "") +
+          '<input class="eg-cap" data-gcap="' + gi + '" type="text" placeholder="Group caption (optional)" value="' + esc(g.caption) + '">' +
+          '<span class="eg-btns">' +
+            '<button data-gmove="-1" data-g="' + gi + '" title="Move group up"' + (gi === 0 ? " disabled" : "") + ">↑</button>" +
+            '<button data-gmove="1" data-g="' + gi + '" title="Move group down"' + (gi === groups.length - 1 ? " disabled" : "") + ">↓</button>" +
+            (many ? '<button data-gremove data-g="' + gi + '" title="Remove group (its photos move to the group above)">×</button>' : "") +
+          "</span>" +
+        "</div>" +
+        '<p class="eg-hint">' + HINTS[g.layout] + "</p>" +
+        '<div class="thumbs">' + (thumbs || '<div class="eg-empty">Drag photos here</div>') + "</div>" +
+      "</div>";
+    }).join("") +
+    '<button type="button" class="eg-add" data-gadd>+ New group</button>';
+  }
+
+  // Move a photo to the slot just before media[before] (or to the end of its group when before is -1).
+  function placeMedia(from, grp, before) {
+    var m = media[from];
+    media.splice(from, 1);
+    m.grp = grp;
+    var at;
+    if (before !== -1) {
+      at = before > from ? before - 1 : before;
+    } else {
+      // after the last photo already in this group, or at the end
+      at = media.length;
+      for (var j = media.length - 1; j >= 0; j--) if (media[j].grp === grp) { at = j + 1; break; }
+    }
+    media.splice(at, 0, m);
+    drawMedia();
+  }
+
+  // Swap with the neighbouring photo in the same group.
+  function moveMedia(i, dir) {
+    var m = media[i], j = i + dir;
+    while (j >= 0 && j < media.length && media[j].grp !== m.grp) j += dir;
+    if (j < 0 || j >= media.length) return;
+    media[i] = media[j]; media[j] = m;
     drawMedia();
   }
 
   $("eMedia").addEventListener("click", function (ev) {
     var b = ev.target.closest("button");
     if (!b) return;
+    if (b.hasAttribute("data-gadd")) { groups.push(newGroup()); drawMedia(); return; }
+    if (b.hasAttribute("data-gmove")) {
+      var a = +b.dataset.g, c = a + (+b.dataset.gmove);
+      if (c < 0 || c >= groups.length) return;
+      var t = groups[a]; groups[a] = groups[c]; groups[c] = t;
+      drawMedia(); return;
+    }
+    if (b.hasAttribute("data-gremove")) {
+      var gi = +b.dataset.g, gone = groups[gi], into = groups[gi === 0 ? 1 : gi - 1];
+      media.forEach(function (m) { if (m.grp === gone) m.grp = into; });
+      groups.splice(gi, 1);
+      drawMedia(); return;
+    }
     var i = +b.dataset.i;
     if (b.hasAttribute("data-remove")) {
-      var gone = media.splice(i, 1)[0];
-      if (gone && gone.url) URL.revokeObjectURL(gone.url);
+      var dead = media.splice(i, 1)[0];
+      if (dead && dead.url) URL.revokeObjectURL(dead.url);
       drawMedia();
-    } else {
-      moveMedia(i, i + (+b.dataset.move));
+    } else if (b.dataset.move) {
+      moveMedia(i, +b.dataset.move);
     }
   });
 
-  // Drag and drop to reorder
+  $("eMedia").addEventListener("change", function (ev) {
+    var t = ev.target;
+    if (t.dataset.layout !== undefined) { groups[+t.dataset.layout].layout = t.value; drawMedia(); }
+    else if (t.dataset.cols !== undefined) { groups[+t.dataset.cols].cols = +t.value; }
+  });
+  // Captions are saved as you type (no redraw, so the cursor stays put).
+  $("eMedia").addEventListener("input", function (ev) {
+    var t = ev.target;
+    if (t.dataset.gcap !== undefined) groups[+t.dataset.gcap].caption = t.value;
+    else if (t.dataset.cap !== undefined) media[+t.dataset.cap].caption = t.value;
+  });
+
+  // Drag and drop: reorder within a group, or drop into another group
   var dragFrom = null;
+  function clearDropMarks(box) {
+    box.querySelectorAll(".drop-before,.drop-into").forEach(function (c) { c.classList.remove("drop-before", "drop-into"); });
+  }
   $("eMedia").addEventListener("dragstart", function (ev) {
     var t = ev.target.closest(".thumb");
-    if (!t) return;
+    if (!t || ev.target.closest("input")) return;
     dragFrom = +t.dataset.i;
     t.classList.add("dragging");
     ev.dataTransfer.effectAllowed = "move";
@@ -617,29 +731,51 @@
   });
   $("eMedia").addEventListener("dragover", function (ev) {
     if (dragFrom === null) return;
+    var g = ev.target.closest(".eg");
+    if (!g) return;
     ev.preventDefault();
-    var t = ev.target.closest(".thumb");
-    Array.prototype.forEach.call(this.children, function (c) { c.classList.toggle("drop-before", c === t); });
+    clearDropMarks(this);
+    var t = ev.target.closest(".thumb[data-i]");
+    if (t) t.classList.add("drop-before"); else g.classList.add("drop-into");
   });
   $("eMedia").addEventListener("drop", function (ev) {
     if (dragFrom === null) return;
+    var g = ev.target.closest(".eg");
+    if (!g) return;
     ev.preventDefault();
-    var t = ev.target.closest(".thumb");
-    var onThumb = t && t.dataset.i !== undefined;
-    var to = onThumb ? +t.dataset.i : media.length - 1;
-    if (to > dragFrom && onThumb) to -= 1;   // dropping before the target, after removing the dragged one
-    moveMedia(dragFrom, Math.max(0, to));
+    var t = ev.target.closest(".thumb[data-i]");
+    var from = dragFrom; dragFrom = null;
+    placeMedia(from, groups[+g.dataset.g], t ? +t.dataset.i : -1);
   });
   $("eMedia").addEventListener("dragend", function () {
     dragFrom = null;
     drawMedia();
   });
 
-  function resetMedia(list) {
+  // Load an entry's photos. Entries saved before groups existed become one "Auto rows" group.
+  function resetMedia(entry) {
     media.forEach(function (m) { if (m.url) URL.revokeObjectURL(m.url); });
-    media = (list || []).map(function (im) { return { old: im }; });
+    media = []; groups = [];
+    var list = entry && Array.isArray(entry.groups) && entry.groups.length
+      ? entry.groups
+      : [{ layout: "auto", images: (entry && entry.images) || [] }];
+    list.forEach(function (gd) {
+      var g = newGroup(LAYOUTS.some(function (l) { return l[0] === gd.layout; }) ? gd.layout : "auto");
+      g.cols = Math.min(6, Math.max(2, +gd.cols || 3));
+      g.caption = gd.caption || "";
+      groups.push(g);
+      (gd.images || []).forEach(function (im) {
+        media.push({ old: im, grp: g, caption: (im && im.caption) || "" });
+      });
+    });
     ePics.value = "";
     drawMedia();
+  }
+
+  // What gets saved for one picture: a plain path, or {src, caption} when it has a caption.
+  function savedImage(src, caption) {
+    caption = String(caption || "").trim();
+    return caption ? { src: src, caption: caption } : src;
   }
 
   function newEntry() {
@@ -647,7 +783,7 @@
     var d = recall(DRAFT_KEY);
     eTitle.value = d ? d.title : ""; eBody.value = d ? d.body : ""; eTags.value = d ? d.tags : "";
     eDate.value = (d && d.date) || today();
-    resetMedia([]);
+    resetMedia(null);
     $("eHead").textContent = "New entry";
     $("eCancel").hidden = true;
     eSave.textContent = "Publish";
@@ -660,7 +796,7 @@
     editingId = id;
     eTitle.value = e.title || ""; eBody.value = e.body || ""; eDate.value = e.date || today();
     eTags.value = (e.tags || []).join(", ");
-    resetMedia(e.images || []);
+    resetMedia(e);
     $("eHead").textContent = "Editing entry";
     $("eCancel").hidden = false;
     eSave.textContent = "Save changes";
@@ -694,13 +830,26 @@
     try {
       var newFiles = media.filter(function (m) { return m.file; }).map(function (m) { return m.file; });
       var uploaded = await uploadPhotos(newFiles, fields.date, function (m) { say(eNote, m); });
-      // Build the final list in the order shown in the editor (a PDF expands to its pages in place).
+      // Build each group's list in the order shown in the editor (a PDF expands to its pages in place).
       var k = 0;
-      fields.images = [];
       media.forEach(function (m) {
-        if (m.file) fields.images = fields.images.concat(uploaded[k++]);
-        else fields.images.push(m.old);
+        var paths = m.file ? [].concat(uploaded[k++]) : [mediaPath(m)];
+        m.saved = paths.map(function (src, n) { return savedImage(src, n === 0 ? m.caption : ""); });
       });
+      var outGroups = groups.map(function (g) {
+        var out = { layout: g.layout };
+        if (g.layout === "grid") out.cols = g.cols;
+        if (g.caption.trim()) out.caption = g.caption.trim();
+        out.images = [];
+        media.forEach(function (m) { if (m.grp === g) out.images = out.images.concat(m.saved); });
+        return out;
+      }).filter(function (g) { return g.images.length; });
+      // "images" keeps every picture in one list, so older pages and search still work.
+      fields.images = [];
+      outGroups.forEach(function (g) { fields.images = fields.images.concat(g.images); });
+      // One plain "Auto rows" group is the same as no groups, so it's left out.
+      var plain = outGroups.length <= 1 && (!outGroups[0] || (outGroups[0].layout === "auto" && !outGroups[0].caption));
+      fields.groups = plain ? undefined : outGroups;
       say(eNote, "Saving…");
       if (wasEditing) {
         entries = await commit(function (list) {

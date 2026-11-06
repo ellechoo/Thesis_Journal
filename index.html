@@ -143,7 +143,7 @@ function readEntriesGlobal() {
     var gs = Array.isArray(e.groups) && e.groups.length ? e.groups : [{ layout: "auto", images: e.images }];
     return gs.map(function (g) {
       return { layout: LAYOUTS.indexOf(g.layout) === -1 ? "auto" : g.layout,
-               cols: Math.min(4, Math.max(2, +g.cols || 3)),
+               cols: Math.min(6, Math.max(2, +g.cols || 3)),
                caption: g.caption || "", images: normImages(g.images) };
     }).filter(function (g) { return g.images.length; });
   }
