@@ -171,7 +171,6 @@
     ],
     "body": "256 scraped photos taken on September 3 across 1995-2026. Further explanation is in the presentation.",
     "images": [
-      "images/2026-09-04-256-part-1-page-1.jpg",
       "images/2026-09-04-256-part-1-page-2.jpg",
       "images/2026-09-04-256-part-1-page-3.jpg",
       "images/2026-09-04-256-part-1-page-4.jpg",
@@ -182,6 +181,24 @@
       "images/2026-09-04-256-part-1-page-9.jpg",
       "images/2026-09-04-256-part-1-page-10.jpg",
       "images/2026-09-04-256-part-1-page-11.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-09-04-256-part-1-page-2.jpg",
+          "images/2026-09-04-256-part-1-page-3.jpg",
+          "images/2026-09-04-256-part-1-page-4.jpg",
+          "images/2026-09-04-256-part-1-page-5.jpg",
+          "images/2026-09-04-256-part-1-page-6.jpg",
+          "images/2026-09-04-256-part-1-page-7.jpg",
+          "images/2026-09-04-256-part-1-page-8.jpg",
+          "images/2026-09-04-256-part-1-page-9.jpg",
+          "images/2026-09-04-256-part-1-page-10.jpg",
+          "images/2026-09-04-256-part-1-page-11.jpg"
+        ]
+      }
     ]
   },
   {
