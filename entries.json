@@ -1,16 +1,5 @@
 [
   {
-    "id": "mw2xemjm7v0r",
-    "date": "2026-11-04",
-    "title": "More Voiceprint Development (and site flow rework)",
-    "tags": [],
-    "body": "Along with Accent, Pitch, and Note, the last major element was Timbre. Timbre is really unique for everyone, more-so than everything else actually, so I knew visually it really had to make it's mark. I split Timbre into three scales based on how people (online) usually categorize someone's Timbre and what could accurately be picked up by a mic and detected by the API. So although nasal levels differ per Timbre, that could not be included because it doesn't reliably pick up on a laptop mic. Included: Bright <-> Dark, Breathy <-> Clean, Raspy <-> Smooth. SInce I was working with scales, I had their visual impacts also work as a scale of two extremes. For example, a more raspy voice would have a rougher, spiker core, while a smoother voice will have a perfect, glossy surface. Look on the final site to see how the other Timbre scales show up. The website housing my project was very underbaked since I was focusing on other aspects. So, once I got most of the other elements added, I made some classic wireframes to figure out how a user would go through my site. Since I knew a lot of my users would access my site through their phone, I made sure that the mobile version of the site also worked perfectly and was just as accessible.",
-    "images": [
-      "images/2026-11-04-20261104_195225.jpg",
-      "images/2026-11-04-20261104_195309.jpg"
-    ]
-  },
-  {
     "id": "mw4kuuqy3k4u",
     "date": "2026-10-30",
     "title": "Outcome",
@@ -48,6 +37,17 @@
       "images/2026-10-30-14-archive-filter.jpg",
       "images/2026-10-30-15-archive-filtered.jpg",
       "images/2026-10-30-16-archive-globe.jpg"
+    ]
+  },
+  {
+    "id": "mw2xemjm7v0r",
+    "date": "2026-10-27",
+    "title": "More Voiceprint Development (and site flow rework)",
+    "tags": [],
+    "body": "Along with Accent, Pitch, and Note, the last major element was Timbre. Timbre is really unique for everyone, more-so than everything else actually, so I knew visually it really had to make it's mark. I split Timbre into three scales based on how people (online) usually categorize someone's Timbre and what could accurately be picked up by a mic and detected by the API. So although nasal levels differ per Timbre, that could not be included because it doesn't reliably pick up on a laptop mic. Included: Bright <-> Dark, Breathy <-> Clean, Raspy <-> Smooth. SInce I was working with scales, I had their visual impacts also work as a scale of two extremes. For example, a more raspy voice would have a rougher, spiker core, while a smoother voice will have a perfect, glossy surface. Look on the final site to see how the other Timbre scales show up. The website housing my project was very underbaked since I was focusing on other aspects. So, once I got most of the other elements added, I made some classic wireframes to figure out how a user would go through my site. Since I knew a lot of my users would access my site through their phone, I made sure that the mobile version of the site also worked perfectly and was just as accessible.",
+    "images": [
+      "images/2026-11-04-20261104_195225.jpg",
+      "images/2026-11-04-20261104_195309.jpg"
     ]
   },
   {
