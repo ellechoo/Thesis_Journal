@@ -95,10 +95,10 @@
     ],
     "body": "With the visuals I started from scratch. I needed to examine the data of the voices I had already collected and figure out which elements were most striking and unique across the board. Something I needed to work on was making a proper hierarchy- giving the most visual weight to the most unique aspects of someone's voice such as Accent and Note/Pitch. I then spent a lot of time figuring out how to form individual's voice portraits or \"Voiceprints\" as I call them. I switched from 2D to 3D using 3js generated shapes because it gave the Voiceprints more dimension (literally), and I loved the idea of users being able to spin the visual around to explore it.",
     "images": [
-      "images/2026-10-18-20261104_195054.jpg",
       "images/2026-10-18-inspo5.jpg",
       "images/2026-10-18-inspo3.jpg",
       "images/2026-10-18-style-inspo.jpg",
+      "images/2026-10-18-20261104_195054.jpg",
       "images/2026-10-18-heart-ceramic.jpg",
       "images/2026-10-18-heart-wax.jpg",
       "images/2026-10-18-proto-2.jpg",
@@ -107,12 +107,17 @@
     "groups": [
       {
         "layout": "grid",
-        "cols": 2,
+        "cols": 3,
         "images": [
-          "images/2026-10-18-20261104_195054.jpg",
           "images/2026-10-18-inspo5.jpg",
           "images/2026-10-18-inspo3.jpg",
           "images/2026-10-18-style-inspo.jpg"
+        ]
+      },
+      {
+        "layout": "full",
+        "images": [
+          "images/2026-10-18-20261104_195054.jpg"
         ]
       },
       {
