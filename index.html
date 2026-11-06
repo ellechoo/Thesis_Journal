@@ -69,13 +69,30 @@ function readEntriesGlobal() {
   }
 
   /* ---------- small markdown ---------- */
+  // Only web, email and relative links are allowed (no "javascript:" and the like).
+  function safeUrl(u) {
+    return /^[a-z][a-z0-9+.-]*:/i.test(u) && !/^(https?|mailto):/i.test(u) ? "#" : u;
+  }
   function inline(s) {
+    // Finished pieces (code, images, link tags) are set aside so later steps can't mangle them,
+    // e.g. the _ or * inside a web address.
+    var kept = [];
+    function keep(html) { kept.push(html); return "\u0000" + (kept.length - 1) + "\u0000"; }
+    function a(url) { return keep('<a href="' + safeUrl(url) + '" target="_blank" rel="noopener">'); }
     return s
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
+      .replace(/`([^`]+)`/g, function (m, c) { return keep("<code>" + c + "</code>"); })
+      .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (m, alt, src) {
+        return keep('<img src="' + safeUrl(src) + '" alt="' + alt + '" loading="lazy">');
+      })
+      // [text](https://...)
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, text, url) { return a(url) + text + keep("</a>"); })
+      // a web address typed or pasted on its own
+      .replace(/\bhttps?:\/\/[^\s<\u0000]*[^\s<\u0000.,;:!?)\]'"]/g, function (url) {
+        return a(url) + keep(url) + keep("</a>");
+      })
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/(^|[^*\w])\*([^*\n]+)\*/g, "$1<em>$2</em>")
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      .replace(/\u0000(\d+)\u0000/g, function (m, i) { return kept[+i]; });
   }
   function md(src) {
     var lines = String(src || "").replace(/\r\n?/g, "\n")

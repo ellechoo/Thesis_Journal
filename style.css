@@ -15,6 +15,13 @@
 }
 
 
+/* ---------- Photo corners ----------
+   How rounded photos and videos are. 0 = square corners. */
+:root {
+  --photo-radius: 6px;
+}
+
+
 /* ---------- Font ----------
    Inter is loaded in index.html (the Google Fonts line in <head>).
    To change fonts, update that line and this one. */
@@ -179,6 +186,11 @@ article h2 {
   font-weight: normal;
   line-height: 1.3;
   margin: .1rem 0 .9rem;   /* last number = space between title and text */
+}
+
+/* links inside entry text; long web addresses wrap instead of overflowing */
+.body a {
+  overflow-wrap: anywhere;
 }
 
 /* entry text */
@@ -578,4 +590,15 @@ article h2 {
   .feature .rest {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+
+/* Rounded corners on every photo and video (size set by --photo-radius at the top) */
+.body img,
+.pics img,
+.group img,
+.group video,
+.vids video,
+#zoom img {
+  border-radius: var(--photo-radius);
 }
