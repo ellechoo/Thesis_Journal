@@ -102,6 +102,31 @@
       "images/2026-10-14-screenshot-2026-10-15-at-92047-pm.png",
       "images/2026-10-14-screenshot-2026-10-15-at-95752-pm.png",
       "images/2026-10-14-screenshot-2026-10-21-at-52407-pm.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-10-14-20261104_194950.jpg",
+          "images/2026-10-14-20261104_195015.jpg"
+        ]
+      },
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-10-14-screenshot-2026-10-15-at-91232-pm.jpg",
+          "images/2026-10-14-screenshot-2026-10-15-at-92047-pm.png",
+          "images/2026-10-14-screenshot-2026-10-15-at-95752-pm.png"
+        ]
+      },
+      {
+        "layout": "full",
+        "images": [
+          "images/2026-10-14-screenshot-2026-10-21-at-52407-pm.jpg"
+        ]
+      }
     ]
   },
   {
