@@ -7,11 +7,16 @@
 /* ---------- Colors ----------
    Change a color once here and it updates everywhere. */
 :root {
-  --paper: #0f1e3d;   /* page background (dark blue) */
-  --ink:   #ffffff;   /* main text */
-  --muted: #a7b4cc;   /* dates, tags, small text */
-  --rule:  #2a3c63;   /* thin divider lines */
-  --link:  #8cc2ff;   /* links */
+  --paper: #ffffff;   /* page background */
+  --ink:   #000000;   /* main text */
+  --muted: #555555;   /* dates, tags, small text */
+  --rule:  #000000;   /* thin divider lines */
+  --side:  #ffffff;   /* left column (title, search, entry list) */
+  --well:  #ffffff;   /* photo side of each entry */
+  --card:  #ffffff;   /* boxes */
+  --edge:  #000000;   /* outline around boxes, and the lines between sections */
+  --field: #ffffff;   /* search box */
+  --link:  #000000;   /* links */
 }
 
 
@@ -19,6 +24,7 @@
    How rounded photos and videos are. 0 = square corners. */
 :root {
   --photo-radius: 6px;
+  --photo-outline: #c4c4c4;   /* outline on photos with white edges */
 }
 
 
@@ -110,17 +116,17 @@ small,
 #search {
   width: 100%;
   font: inherit;
-  font-size: .9rem;
+  font-size: .88rem;
   color: inherit;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--rule);
-  padding: .3rem 0;
+  background: var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555555' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat .75rem 50%;
+  border: 1px solid var(--edge);
+  border-radius: 999px;          /* pill shape; use 8px for a squarer box */
+  padding: .5rem .9rem .5rem 2.3rem;
 }
 
 #search:focus {
   outline: none;
-  border-bottom-color: var(--ink);
+  border-color: var(--muted);
 }
 
 #search::placeholder {
@@ -325,58 +331,87 @@ article h2 {
 
 /* ==========================================================
    Wide layout (public page only — admin.html is unaffected)
-   Sidebar on the left with the entry list; each entry shows
-   its text on the left and its photos on the right.
+   Left: a full-height column with the title, search, tags and the entry list.
+   Right: one box per entry, its text on the left and its photos on the right,
+   with a line between them. Each photo group is its own box too.
    ========================================================== */
 .journal {
-  max-width: 1760px;     /* how wide the whole page gets */
-  padding: 0 2rem;   /* bottom space lives on main, so the sidebar never slides up at the end */
+  max-width: none;       /* runs edge to edge */
+  padding: 0;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);   /* sidebar width | entries */
-  gap: 3.5rem;
+  grid-template-columns: 280px minmax(0, 1fr);   /* left column width | entries */
+  gap: 0;
 }
 
-/* Sidebar */
+/* ---------- Left column ---------- */
 .side {
   position: sticky;
   top: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 3rem 0 2rem;
+  gap: 1rem;
+  padding: 1.5rem 1rem 1.25rem;
+  background: var(--side);
+  border-right: 1px solid var(--edge);
 }
 
+/* title and subtitle (no box) */
 .journal .site-head {
   display: block;
-  padding-bottom: 1.25rem;
-  margin-bottom: 1.25rem;
+  margin: 0;
+  padding: 0 .25rem;
+  border: 0;
 }
 
 .journal .site-head h1 {
-  font-size: 1.5rem;
-  line-height: 1.25;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+/* the subtitle under the title */
+.journal .site-head p {
+  font-size: .8rem;
+  line-height: 1.4;
+  margin-top: .35rem;
 }
 
 .journal .finder {
   flex: none;
   width: auto;
-  margin: 0 0 1.5rem;
+  margin: .75rem 0 0;   /* space above the search bar */
 }
 
-/* The list of entries */
+/* The list of entries: each one is its own box */
 #toc {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  border-top: 1px solid var(--rule);
-  padding-top: .75rem;
   scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 2px 2px;
+}
+
+#toc::before {
+  content: "Entries";
+  display: block;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .1rem .2rem .2rem;
 }
 
 #toc a {
   display: block;
-  padding: .35rem 0 .35rem .75rem;
-  border-left: 2px solid transparent;
-  color: var(--muted);
+  flex: none;
+  padding: .55rem .75rem;
+  background: var(--card);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  color: var(--ink);
   text-decoration: none;
   font-size: .85rem;
   line-height: 1.35;
@@ -385,34 +420,67 @@ article h2 {
 #toc a span {
   display: block;
   font-size: .72rem;
-  opacity: .75;
+  color: var(--muted);
 }
 
 #toc a:hover {
-  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--edge);   /* outline looks a bit heavier */
 }
 
-/* the entry you're currently reading */
+/* the entry you're currently reading: filled in */
 #toc a.on {
-  color: var(--ink);
-  border-left-color: var(--ink);
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
-/* Entries */
+#toc a.on span {
+  color: var(--paper);
+}
+
+/* ---------- Entry boxes ---------- */
 .journal main {
-  padding: 3rem 0 4rem;
   min-width: 0;
+  padding: 1.25rem 1.25rem 3rem;
 }
 
 .journal article {
-  scroll-margin-top: 2rem;   /* space above an entry when jumping to it */
-  padding-bottom: 3.5rem;
-  margin-bottom: 3.5rem;
-  border-bottom: 1px solid var(--rule);
+  scroll-margin-top: 1.25rem;  /* space above an entry when jumping to it */
+  margin: 0 0 1.25rem;         /* space between entry boxes */
+  background: var(--card);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
 }
 
 .journal article:last-child {
-  border-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* the text side */
+.journal .text {
+  padding: 1.5rem 1.6rem 1.4rem;
+}
+
+/* space between the date and the entry title */
+.journal .text h2 {
+  margin-top: 1.5rem;
+}
+
+.journal .text .body > :last-child {
+  margin-bottom: 0;
+}
+
+/* the photo side, below or beside the text with a line between */
+.journal .media {
+  padding: 1rem;
+  background: var(--well);
+  border-top: 1px solid var(--edge);
+  border-radius: 0 0 13px 13px;
+}
+
+/* photo groups sit on their own (no box); extra space between groups sets them apart */
+.journal .group + .group {
+  margin-top: 1.5rem;
 }
 
 .journal .pics {
@@ -423,19 +491,26 @@ article h2 {
   margin-top: 0;
 }
 
-/* Text left, photos right — only when there's room */
+/* Wide screens: text on the left, photos on the right */
 @media (min-width: 1150px) {
   .journal article.has-media {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);   /* text : photos */
-    gap: 2.5rem;
-    align-items: start;
+    align-items: stretch;
+  }
+  .journal article.has-media .text {
+    align-self: start;
   }
   .journal .text.pin {
     position: sticky;
-    top: 2rem;
+    top: 0;
   }
-  /* smaller photo rows in the right column, so more fit across */
+  .journal .media {
+    border-top: 0;
+    border-left: 1px solid var(--edge);
+    border-radius: 0 13px 13px 0;
+  }
+  /* smaller photo rows in the right side, so more fit across */
   .journal .pics {
     --photo-height: 125px;
     --photo-max-height: 200px;
@@ -443,34 +518,36 @@ article h2 {
   }
   /* entries with no photos keep a comfortable reading width */
   .journal article.no-media .text {
-    max-width: 640px;
+    max-width: 760px;
   }
 }
 
-@media (max-width: 1149px) {
-  .journal .text { max-width: 640px; }
-  .journal .media { margin-top: 1rem; }
-}
-
-/* Tablets and phones: back to one column, sidebar becomes the header */
+/* Tablets and phones: one column, the left column becomes the top of the page */
 @media (max-width: 860px) {
   .journal {
     display: block;
-    max-width: 640px;
-    padding: 2.5rem 1.25rem 4rem;
   }
   .side {
     position: static;
     height: auto;
-    padding: 0;
-    border-bottom: 1px solid var(--rule);
-    margin-bottom: 2.5rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--edge);
+    padding: 1.25rem 1rem;
   }
   #toc {
     display: none;
   }
   .journal main {
-    padding-top: 0;
+    padding: .75rem .75rem 2rem;
+  }
+  .journal article {
+    margin-bottom: .75rem;
+  }
+  .journal .text {
+    padding: 1.2rem 1.2rem 1.1rem;
+  }
+  .journal .media {
+    padding: .6rem;
   }
 }
 
@@ -592,6 +669,12 @@ article h2 {
   }
 }
 
+
+/* Thin outline on photos whose edges are white (slides, scans, screenshots),
+   so they don't melt into the white page. index.html decides which ones. */
+img.light-edge {
+  box-shadow: 0 0 0 1px var(--photo-outline, #c4c4c4);
+}
 
 /* Rounded corners on every photo and video (size set by --photo-radius at the top) */
 .body img,

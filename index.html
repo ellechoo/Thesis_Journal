@@ -207,6 +207,39 @@ function readEntriesGlobal() {
     box.style.setProperty("--cell-ratio", best);
   }
 
+  /* ---------- outline for photos with white edges ----------
+     Slides, scans and screenshots on white would melt into the white page.
+     When a photo loads, its outer edge is sampled; if most of it is near-white,
+     the photo gets the "light-edge" class, which draws a thin outline (see style.css). */
+  var LIGHT = 232;          // how bright a pixel must be (0-255) to count as "white"
+  var LIGHT_SHARE = 0.25;   // how much of the edge must be white to get an outline
+  function checkEdge(img) {
+    if (!img.naturalWidth) return;
+    try {
+      var w = 80, h = Math.max(2, Math.round(80 * img.naturalHeight / img.naturalWidth));
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var ctx = c.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, w, h);
+      var d = ctx.getImageData(0, 0, w, h).data, white = 0, total = 0;
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          if (x > 1 && x < w - 2 && y > 1 && y < h - 2) continue;   // only the outer 2px ring
+          var i = (y * w + x) * 4;
+          var lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          total++; if (lum >= LIGHT) white++;
+        }
+      }
+      img.classList.toggle("light-edge", white / total >= LIGHT_SHARE);
+    } catch (e) { /* image from another site that can't be read: leave it as is */ }
+  }
+  function outlineLightPhotos(root) {
+    root.querySelectorAll(".group img, .body img").forEach(function (img) {
+      if (img.complete) checkEdge(img);
+      else img.addEventListener("load", function () { checkEdge(img); });
+    });
+  }
+
   /* ---------- photo rows ----------
      Packs photos into rows that fill the column width without cropping.
      Each row gets one height; photos keep their own shape within it. */
@@ -372,6 +405,7 @@ function readEntriesGlobal() {
           if (!img.complete) img.addEventListener("load", function () { shapeGrid(box); });
         });
       });
+      outlineLightPhotos(feed);
       pinText();
       watchEntries();
     }
