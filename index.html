@@ -332,6 +332,18 @@ function readEntriesGlobal() {
     }).join("");
   }
 
+  // Clicking an entry in the list glides to it instead of jumping.
+  toc.addEventListener("click", function (ev) {
+    var a = ev.target.closest('a[href^="#"]');
+    if (!a) return;
+    var target = document.getElementById(a.getAttribute("href").slice(1));
+    if (!target) return;
+    ev.preventDefault();
+    var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+    history.replaceState(null, "", a.getAttribute("href"));   // keep the link to that entry in the address bar
+  });
+
   // Highlight the entry you're currently reading in the sidebar.
   var spy;
   function watchEntries() {
