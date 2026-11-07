@@ -7,7 +7,7 @@
 <meta name="description" content="Progress log for my thesis project.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Mynerve&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -185,7 +185,7 @@ function readEntriesGlobal() {
     if (g.layout === "auto" || g.layout === "phones") {
       inner = mediaHTML(g.images, g.layout === "phones" ? "phones" : "");
     } else if (g.layout === "grid") {
-      inner = '<div class="grid" data-shape="' + g.shape + '" style="--cols:' + g.cols +
+      inner = '<div class="grid" data-cols="' + g.cols + '" data-shape="' + g.shape + '" style="--cols:' + g.cols +
         (g.shape !== "auto" && g.shape !== "none" ? "; --cell-ratio:" + g.shape : "") + '">' + figs(g.images) + "</div>";
     } else if (g.layout === "feature") {
       inner = '<div class="feature' + (g.images.length === 1 ? " one" : "") + '">' +
@@ -261,9 +261,12 @@ function readEntriesGlobal() {
     var single = cssPx(box, "--single-photo-height", 320);
     var gap    = parseFloat(getComputedStyle(box).columnGap) || 8;
     // A small set of photos (2–4) gets bigger rows, so it doesn't look lost.
-    var few = box.children.length <= 4;
+    // skip photos that are hidden on phones (until "Show all" opens them)
+    var figs = Array.prototype.slice.call(box.children).filter(function (f) {
+      return !(f.classList.contains("extra") && !f.closest(".media.open"));
+    });
+    var few = figs.length <= 4;
     if (few) { target = Math.max(target, 200); maxH = Math.max(maxH, 300); }
-    var figs = Array.prototype.slice.call(box.children);
     var shapes = figs.map(function (f) {
       var img = f.querySelector("img");
       return img && img.naturalWidth ? img.naturalWidth / img.naturalHeight : 4 / 3;  // guess until loaded
@@ -416,6 +419,137 @@ function readEntriesGlobal() {
     window.scrollTo(0, 0);
   });
 
+  /* ---------- shorter entries on phones ----------
+     On narrow screens each entry's text is cut to a few lines with "Read more",
+     and long photo sets show only the first few with "Show all N photos".
+     (The number of lines is set in style.css: --mobile-text-lines.) */
+  var MOBILE_PHOTOS = 6;     // photos shown before "Show all"
+  var MOBILE_MIN_HIDDEN = 3; // only collapse if at least this many would be hidden
+  var narrow = window.matchMedia("(max-width: 860px)");
+
+  function relayoutAll() {
+    feed.querySelectorAll(".pics").forEach(layoutPics);
+  }
+  function collapseForPhones() {
+    feed.querySelectorAll("article").forEach(function (art) {
+      // text
+      var body = art.querySelector(".body");
+      if (body && body.textContent.trim()) {
+        body.classList.add("clamp");
+        var more = document.createElement("button");
+        more.type = "button"; more.className = "more-text"; more.textContent = "Read more"; more.hidden = true;
+        body.after(more);
+      }
+      // photos
+      var media = art.querySelector(".media");
+      if (!media) return;
+      var figs = media.querySelectorAll("figure");
+      if (figs.length - MOBILE_PHOTOS < MOBILE_MIN_HIDDEN) return;
+      for (var i = MOBILE_PHOTOS; i < figs.length; i++) figs[i].classList.add("extra");
+      media.classList.add("can-open");
+      media.querySelectorAll(".group").forEach(function (g) {
+        if (!g.querySelector("figure:not(.extra)")) g.classList.add("extra");
+      });
+      var all = document.createElement("button");
+      all.type = "button"; all.className = "more-photos";
+      all.dataset.label = "Show all " + figs.length + " photos";
+      all.textContent = all.dataset.label;
+      media.appendChild(all);
+    });
+    checkClamps();
+    watchOpenable();
+  }
+  // "Read more" only appears when the text is actually cut off.
+  function checkClamps() {
+    feed.querySelectorAll(".body.clamp").forEach(function (body) {
+      var btn = body.nextElementSibling;
+      if (btn && btn.classList.contains("more-text")) btn.hidden = body.scrollHeight <= body.clientHeight + 2;
+    });
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(checkClamps);
+
+  /* Opening and closing slide smoothly: the box's height is animated from where it
+     was to where it ends up, then handed back to the page. */
+  var calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function slide(el, change, animate) {
+    if (!animate || calm.matches) { change(); return; }
+    var from = el.offsetHeight;
+    change();
+    el.style.height = ""; el.style.maxHeight = "";
+    var to = el.offsetHeight;
+    if (Math.abs(to - from) < 2) return;
+    el.style.maxHeight = "none";           // the text clip would otherwise cut the animation short
+    el.style.height = from + "px";
+    el.style.overflow = "hidden";
+    el.offsetHeight;                       // let the browser register the start height
+    el.classList.add("sliding");
+    el.style.height = to + "px";
+    function done(ev) {
+      if (ev && ev.target !== el) return;
+      el.removeEventListener("transitionend", done);
+      el.classList.remove("sliding");
+      el.style.height = ""; el.style.overflow = ""; el.style.maxHeight = "";
+    }
+    el.addEventListener("transitionend", done);
+    setTimeout(done, 600);                 // in case the transition never fires
+  }
+
+  function setText(art, open, animate) {
+    var body = art.querySelector(".body"), btn = art.querySelector(".more-text");
+    if (!body || !btn || btn.hidden) return;
+    slide(body, function () { body.classList.toggle("clamp", !open); }, animate);
+    btn.textContent = open ? "Show less" : "Read more";
+  }
+  function setPhotos(art, open, animate) {
+    var media = art.querySelector(".media"), btn = art.querySelector(".more-photos");
+    if (!media || !btn) return;
+    slide(media, function () {
+      media.classList.toggle("open", open);
+      relayoutAll();
+    }, animate);
+    btn.textContent = open ? "Show fewer photos" : btn.dataset.label;
+  }
+  function isOpen(art) {
+    var body = art.querySelector(".body.clamp"), btn = art.querySelector(".more-text");
+    return (btn && !btn.hidden && !body) || !!art.querySelector(".media.open");
+  }
+
+  feed.addEventListener("click", function (ev) {
+    var b = ev.target.closest(".more-text, .more-photos");
+    if (!b) return;
+    var art = b.closest("article");
+    var isText = b.classList.contains("more-text");
+    var opening = isText ? b.textContent === "Read more" : !art.querySelector(".media.open");
+    (isText ? setText : setPhotos)(art, opening, true);
+    // when closing from further down the entry, glide back up to its top
+    var top = art.getBoundingClientRect().top;
+    if (!opening && top < 0) window.scrollTo({ top: window.scrollY + top - 12, behavior: calm.matches ? "auto" : "smooth" });
+  });
+
+  // Entries close again on their own once they're scrolled out of view.
+  // If the entry is above the screen, the page is shifted by the same amount so
+  // what you're looking at doesn't jump.
+  var closer = ("IntersectionObserver" in window) && new IntersectionObserver(function (items) {
+    items.forEach(function (it) {
+      var art = it.target;
+      if (it.isIntersecting || !narrow.matches || !isOpen(art)) return;
+      var above = it.boundingClientRect.bottom <= 0;
+      var y = window.scrollY, h = art.offsetHeight;
+      setText(art, false, false);
+      setPhotos(art, false, false);
+      var shrink = h - art.offsetHeight;
+      if (above && shrink > 0 && Math.abs(window.scrollY - y) < 1) window.scrollBy(0, -shrink);
+    });
+  });
+  function watchOpenable() {
+    if (!closer) return;
+    closer.disconnect();
+    feed.querySelectorAll("article").forEach(function (a) {
+      if (a.querySelector(".more-text, .more-photos")) closer.observe(a);
+    });
+  }
+  narrow.addEventListener("change", function () { render(); });
+
   function render() {
     drawMonths();
 
@@ -456,6 +590,7 @@ function readEntriesGlobal() {
         html += entryHTML(e);
       });
       feed.innerHTML = html;
+      if (narrow.matches) collapseForPhones();
       // No orphans in browsers that don't support "text-wrap: pretty" yet:
       // glue the last two words of each paragraph together.
       if (!(window.CSS && CSS.supports && CSS.supports("text-wrap", "pretty"))) {

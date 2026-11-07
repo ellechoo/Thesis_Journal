@@ -39,15 +39,24 @@
   --t-body:  14px;    /* entry text */
   --t-title: 24px;    /* entry titles */
   --t-site:  30px;    /* site title */
-  --w-title: 500;     /* weight of the two titles (400 = regular) */
+  --w-title: 500;     /* weight of headings inside entry text */
 }
 
 
-/* ---------- Font ----------
-   Inter is loaded in index.html (the Google Fonts line in <head>).
-   To change fonts, update that line and this one. */
+/* ---------- Fonts ----------
+   Both are loaded in index.html (the Google Fonts line in <head>).
+   To change fonts, update that line and these. */
 :root {
-  --font: "Inter", system-ui, sans-serif;
+  --font: "Instrument Sans", system-ui, sans-serif;   /* everything */
+  --font-title: "Mynerve", "Instrument Sans", cursive;  /* site title and entry titles */
+  --title-scale: 1.2;   /* handwriting runs small, so titles are drawn a bit bigger than their size above */
+}
+
+/* bigger titles on laptops and desktops */
+@media (min-width: 861px) {
+  :root {
+    --title-scale: 1.4;
+  }
 }
 
 
@@ -203,11 +212,12 @@ article {
 
 /* entry title */
 article h2 {
-  font-size: var(--t-title);
-  font-weight: var(--w-title);
-  line-height: 1.2;
+  font-family: var(--font-title);
+  font-size: calc(var(--t-title) * var(--title-scale));
+  font-weight: 400;
+  line-height: 1.05;
   margin: .1rem 0 .9rem;   /* last number = space between title and text */
-  letter-spacing: -.01em;
+  letter-spacing: 0;
 }
 
 /* links inside entry text; long web addresses wrap instead of overflowing */
@@ -368,7 +378,7 @@ article h2 {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1.5rem 1rem 1.25rem;
+  padding: 34px 1rem 1.25rem;   /* top = space above the title on laptops */
   background: var(--side);
   border-right: 1px solid var(--edge);
 }
@@ -382,10 +392,11 @@ article h2 {
 }
 
 .journal .site-head h1 {
-  font-size: var(--t-site);
-  line-height: 1.1;
-  font-weight: var(--w-title);
-  letter-spacing: -.02em;
+  font-family: var(--font-title);
+  font-size: calc(var(--t-site) * var(--title-scale));
+  line-height: 1.05;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 /* the subtitle under the title */
@@ -638,6 +649,63 @@ article h2 {
   }
 }
 
+/* ---------- Shorter entries on phones (index.html adds the buttons) ---------- */
+:root {
+  --mobile-text-lines: 3;   /* lines of text shown before "Read more" */
+}
+
+.journal .body.clamp {
+  max-height: calc(var(--t-body) * 1.6 * var(--mobile-text-lines));
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 55%, transparent);
+  mask-image: linear-gradient(#000 55%, transparent);
+}
+
+/* .body ends with a paragraph margin; drop it so the fade sits right above the button */
+.journal .body.clamp > :first-child {
+  margin-top: 0;
+}
+
+.more-text {
+  font: inherit;
+  font-size: var(--t-small);
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-top: .5rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.more-photos {
+  display: block;
+  width: 100%;
+  margin-top: .75rem;
+  padding: .55rem 0;
+  font: inherit;
+  font-size: var(--t-small);
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--edge);
+  border-radius: var(--small-radius);
+  cursor: pointer;
+}
+
+/* the smooth open / close (index.html sets the start and end heights) */
+.sliding {
+  transition: height .4s cubic-bezier(.2, .7, .2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sliding { transition: none; }
+}
+
+/* photos past the first few, until "Show all" is tapped */
+.media:not(.open) .extra {
+  display: none !important;
+}
+
 /* Tablets and phones: one column, the left column becomes the top of the page */
 @media (max-width: 860px) {
   .journal {
@@ -648,7 +716,7 @@ article h2 {
     height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--edge);
-    padding: 1.25rem 1rem;
+    padding: 34px 1rem 1.25rem;   /* top = space above the title on phones */
   }
   #toc {
     display: none;
@@ -774,8 +842,11 @@ article h2 {
 
 /* Phones: grids go down to two columns, feature stacks */
 @media (max-width: 560px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* grids keep the columns picked in the editor, but 4-6 become 3 on phones */
+  .grid[data-cols="4"],
+  .grid[data-cols="5"],
+  .grid[data-cols="6"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .feature {
     grid-template-columns: minmax(0, 1fr);
