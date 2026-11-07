@@ -20,10 +20,12 @@
 }
 
 
-/* ---------- Photo corners ----------
-   How rounded photos and videos are. 0 = square corners. */
+/* ---------- Corners ----------
+   How rounded things are. 0 = square corners. */
 :root {
-  --photo-radius: 6px;
+  --photo-radius: 4px;   /* photos and videos */
+  --box-radius: 10px;    /* entry boxes */
+  --small-radius: 7px;   /* entry list boxes, search bar, tag buttons */
   --photo-outline: #c4c4c4;   /* outline on photos with white edges */
 }
 
@@ -120,7 +122,7 @@ small,
   color: inherit;
   background: var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555555' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat .75rem 50%;
   border: 1px solid var(--edge);
-  border-radius: 999px;          /* pill shape; use 8px for a squarer box */
+  border-radius: var(--small-radius);   /* use 999px for a pill shape */
   padding: .5rem .9rem .5rem 2.3rem;
 }
 
@@ -148,7 +150,7 @@ small,
   color: var(--muted);
   background: transparent;
   border: 1px solid var(--rule);
-  border-radius: 999px;   /* rounded ends; use 4px for squarer buttons */
+  border-radius: var(--small-radius);   /* use 999px for rounded ends */
   padding: .2rem .7rem;
   cursor: pointer;
 }
@@ -410,7 +412,7 @@ article h2 {
   padding: .55rem .75rem;
   background: var(--card);
   border: 1px solid var(--edge);
-  border-radius: 10px;
+  border-radius: var(--small-radius);
   color: var(--ink);
   text-decoration: none;
   font-size: .85rem;
@@ -449,7 +451,7 @@ article h2 {
   margin: 0 0 1.25rem;         /* space between entry boxes */
   background: var(--card);
   border: 1px solid var(--edge);
-  border-radius: 14px;
+  border-radius: var(--box-radius);
 }
 
 .journal article:last-child {
@@ -475,7 +477,7 @@ article h2 {
   padding: 1rem;
   background: var(--well);
   border-top: 1px solid var(--edge);
-  border-radius: 0 0 13px 13px;
+  border-radius: 0 0 calc(var(--box-radius) - 1px) calc(var(--box-radius) - 1px);
 }
 
 /* photo groups sit on their own (no box); extra space between groups sets them apart */
@@ -508,7 +510,7 @@ article h2 {
   .journal .media {
     border-top: 0;
     border-left: 1px solid var(--edge);
-    border-radius: 0 13px 13px 0;
+    border-radius: 0 calc(var(--box-radius) - 1px) calc(var(--box-radius) - 1px) 0;
   }
   /* smaller photo rows in the right side, so more fit across */
   .journal .pics {
