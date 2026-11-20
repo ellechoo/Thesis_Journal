@@ -50,8 +50,7 @@
     ],
     "groups": [
       {
-        "layout": "grid",
-        "cols": 2,
+        "layout": "full",
         "images": [
           "images/2026-11-20-screenshot-2026-11-08-at-73457-pm.jpg",
           "images/2026-11-20-screenshot-2026-11-08-at-73512-pm.jpg"
