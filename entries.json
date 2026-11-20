@@ -1,5 +1,44 @@
 [
   {
+    "id": "mwp7yp7w0bdu",
+    "date": "2026-11-13",
+    "title": "Prototype 2 Idea and First Iteration",
+    "tags": [
+      "prototype2"
+    ],
+    "body": "",
+    "images": [
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-1.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-2.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-3.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-4.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-5.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-6.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-7.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-8.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-9.jpg",
+      "images/2026-11-13-hanja-roots-nov-13pptx-page-10.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-1.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-2.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-3.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-4.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-5.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-6.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-7.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-8.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-9.jpg",
+          "images/2026-11-13-hanja-roots-nov-13pptx-page-10.jpg"
+        ]
+      }
+    ]
+  },
+  {
     "id": "mw4kuuqy3k4u",
     "date": "2026-10-30",
     "title": "Outcome",
