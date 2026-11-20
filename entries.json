@@ -1,26 +1,5 @@
 [
   {
-    "id": "mwp8canyb565",
-    "date": "2026-11-15",
-    "title": "Prototype 2 Start (and fail)",
-    "tags": [],
-    "body": "My idea for prototype 2 was to do something about the origin of multiple names (per person) and the connections/cultural backgrounds behind them. However, as I was starting to build a draft of the site, I found out that Korean names in particular are quite subjective and the characters behind them can have many interpretations. Usually, when parents (or lets be fr grandparents) pick a Korean name for their child/grandchild, it is up to the namer to decide what each character means. This would mean that my project (which was going to start with English and Korean names) would be extremely reliant on the user knowing the specific story and meaning behind their Korean name. They would have to ask their family members and get back to the site later. I planned for this site to be more of a informative database- users would be able to enter their different first names and I would use online databases to inform the user about the relationship between their different names. Obviously, since Korean names aren't as straightforward as English ones with tracing their history, things became way way wayyy too complicated and I lost interest in this topic. So I pivoted!",
-    "images": [
-      "images/2026-11-20-screenshot-2026-11-08-at-73457-pm.jpg",
-      "images/2026-11-20-screenshot-2026-11-08-at-73512-pm.jpg"
-    ],
-    "groups": [
-      {
-        "layout": "grid",
-        "cols": 2,
-        "images": [
-          "images/2026-11-20-screenshot-2026-11-08-at-73457-pm.jpg",
-          "images/2026-11-20-screenshot-2026-11-08-at-73512-pm.jpg"
-        ]
-      }
-    ]
-  },
-  {
     "id": "mwp7yp7w0bdu",
     "date": "2026-11-13",
     "title": "Prototype 2 Idea and First Iteration",
@@ -55,6 +34,27 @@
           "images/2026-11-13-hanja-roots-nov-13pptx-page-8.jpg",
           "images/2026-11-13-hanja-roots-nov-13pptx-page-9.jpg",
           "images/2026-11-13-hanja-roots-nov-13pptx-page-10.jpg"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mwp8canyb565",
+    "date": "2026-11-08",
+    "title": "Prototype 2 Start (and fail)",
+    "tags": [],
+    "body": "My idea for prototype 2 was to do something about the origin of multiple names (per person) and the connections/cultural backgrounds behind them. However, as I was starting to build a draft of the site, I found out that Korean names in particular are quite subjective and the characters behind them can have many interpretations. Usually, when parents (or lets be fr grandparents) pick a Korean name for their child/grandchild, it is up to the namer to decide what each character means. This would mean that my project (which was going to start with English and Korean names) would be extremely reliant on the user knowing the specific story and meaning behind their Korean name. They would have to ask their family members and get back to the site later. I planned for this site to be more of a informative database- users would be able to enter their different first names and I would use online databases to inform the user about the relationship between their different names. Obviously, since Korean names aren't as straightforward as English ones with tracing their history, things became way way wayyy too complicated and I lost interest in this topic. So I pivoted!",
+    "images": [
+      "images/2026-11-20-screenshot-2026-11-08-at-73457-pm.jpg",
+      "images/2026-11-20-screenshot-2026-11-08-at-73512-pm.jpg"
+    ],
+    "groups": [
+      {
+        "layout": "grid",
+        "cols": 2,
+        "images": [
+          "images/2026-11-20-screenshot-2026-11-08-at-73457-pm.jpg",
+          "images/2026-11-20-screenshot-2026-11-08-at-73512-pm.jpg"
         ]
       }
     ]
